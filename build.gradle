@@ -21,9 +21,9 @@ repositories {
 	mavenCentral()
 
 	// Cloth Config
-	maven { url 'https://maven.shedaniel.me/' }
+	maven { url = 'https://maven.shedaniel.me/' }
 	// Mod Menu
-	maven { url 'https://maven.terraformersmc.com/' }
+	maven { url = 'https://maven.terraformersmc.com/' }
 }
 
 loom {
@@ -36,6 +36,19 @@ loom {
 		}
 	}
 
+	// 配置包含库
+	runs {
+		client {
+			vmArg "-Djava.library.path=${file('lib')}"
+		}
+	}
+}
+
+// 声明 include 配置用于打包依赖
+configurations {
+	includeImplementation
+	include
+	includeImplementation.extendsFrom(include)
 }
 
 dependencies {
@@ -47,9 +60,9 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	// Jython - Python implementation for Java (include in jar)
+	// Jython - Python implementation for Java (打包进jar)
 	implementation "org.python:jython-standalone:${project.jython_version}"
-	include "org.python:jython-standalone:${project.jython_version}"
+	includeImplementation "org.python:jython-standalone:${project.jython_version}"
 
 	// Cloth Config - Configuration library with GUI
 	modApi("me.shedaniel.cloth:cloth-config-fabric:15.0.130") {
@@ -57,7 +70,7 @@ dependencies {
 	}
 
 	// Mod Menu - For in-game mod configuration UI
-	modImplementation "com.terraformersmc:modmenu:17.0.0-beta.2"
+	modImplementation "com.terraformersmc:modmenu:12.0.0"
 
 }
 
@@ -90,6 +103,27 @@ jar {
 
 	from("LICENSE") {
 		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+}
+
+// 在 afterEvaluate 中配置 jar 任务来包含 Jython
+afterEvaluate {
+	tasks.named('jar').configure {
+		// 完整包含 Jython Standalone JAR 的所有内容
+		from(configurations.includeImplementation.collect { it.isDirectory() ? it : zipTree(it) }) {
+			// 包含所有必需的文件，不过滤
+			exclude "META-INF/*.RSA"
+			exclude "META-INF/*.SF"
+			exclude "META-INF/LICENSE"
+			exclude "META-INF/NOTICE"
+		}
+
+		// 确保 Jython 能找到 lib 目录
+		manifest {
+			attributes(
+				"Jython-Python-Home": "/python"
+			)
+		}
 	}
 }
 

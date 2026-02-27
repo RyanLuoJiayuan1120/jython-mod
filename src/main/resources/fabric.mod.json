@@ -36,5 +36,8 @@
 		"minecraft": "~1.21.11",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+	"recommends": {
+		"modmenu": "*"
 	}
 }

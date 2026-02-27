@@ -43,28 +43,38 @@ class ModImporter:
 importer = ModImporter()
 
 for path in REMODPATH:
+    # 创建目录（如果不存在）
     if not os.path.isdir(path):
         try:
-            # 使用命令创建目录（兼容跨平台）
-            import platform
-            if platform.system() == "Windows":
-                os.system('mkdir "' + path + '"')
-            else:
-                os.system('mkdir -p "' + path + '"')
+            os.makedirs(path)
             LOGGER.info("Created directory: " + path)
         except Exception as e:
             LOGGER.error("Error at mkdir:" + path + " - " + str(e))
+            continue  # 跳过无法创建的目录
+
     LOGGER.info("Scanning path: " + path)
-    list_ = os.walk(path)
-    list_ = list(list_)[0][2]
-    LOGGER.info("Found files: " + str(list_))
-    for i in list_:
-        try:
-            full_path = str(path+"/"+str(i)).replace("//", "/").replace("\\\\", "\\")
-            LOGGER.info("Loading: " + full_path)
-            importer.import_(full_path)
-        except Exception as e:
-            LOGGER.error("Error loading " + str(i) + ": " + str(e))
+
+    # 安全地遍历目录
+    try:
+        walk_result = list(os.walk(path))
+        if not walk_result:
+            LOGGER.info("No files found in: " + path)
+            continue
+
+        # walk_result[0] 是 (dirpath, dirnames, filenames)
+        # 我们需要 filenames (索引2)
+        file_list = walk_result[0][2] if len(walk_result[0]) > 2 else []
+        LOGGER.info("Found files: " + str(file_list))
+
+        for i in file_list:
+            try:
+                full_path = os.path.join(path, str(i))
+                LOGGER.info("Loading: " + full_path)
+                importer.import_(full_path)
+            except Exception as e:
+                LOGGER.error("Error loading " + str(i) + ": " + str(e))
+    except Exception as e:
+        LOGGER.error("Error scanning path " + path + ": " + str(e))
 
 LOGGER.info("Loaded main modules: " + str(importer.libs))
 LOGGER.info("Loaded client modules: " + str(importer.libs_client))
