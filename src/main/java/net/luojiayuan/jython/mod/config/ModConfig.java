@@ -29,4 +29,10 @@ public class ModConfig implements ConfigData {
 
 	// Python系统路径（可选，用逗号分隔）
 	public String pythonPath = "";
+
+	// 版本号（隐藏字段，不显示在GUI中）
+	// @ConfigEntry.Gui.Excluded
+	// public String version = "";
+	@ConfigEntry.Gui.RequiresRestart
+	public String modsPaths = "{gamedir}/jymods";
 }

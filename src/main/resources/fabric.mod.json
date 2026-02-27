@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "jython-mod",
-	"version": "${version}",
+	"version": "beta-0.01",
 	"name": "jython-mod",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
@@ -17,6 +17,15 @@
 	"entrypoints": {
 		"main": [
 			"net.luojiayuan.jython.mod.Jythonmod"
+		],
+		"client": [
+			"net.luojiayuan.jython.mod.JythonModClient"
+		],
+		"server": [
+			"net.luojiayuan.jython.mod.JythonModServer"
+		],
+		"modmenu": [
+			"net.luojiayuan.jython.mod.config.ModMenuIntegration"
 		]
 	},
 	"mixins": [

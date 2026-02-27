@@ -8,6 +8,8 @@ import net.minecraft.world.level.block.*;
 import org.python.util.PythonInterpreter;
 import org.python.core.PyObject;
 import net.luojiayuan.jython.mod.utils.path;
+import net.luojiayuan.jython.mod.utils.GameDirHelper;
+// import net.luojiayuan.jython.mod.utils.GameDirHelperExample;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,7 @@ public class Jythonmod implements ModInitializer {
 	public static final String MOD_ID = "jython-mod";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static ModConfig CONFIG;
-
+	
 	String path_ = path.get();
 
 	@Override
@@ -31,8 +33,6 @@ public class Jythonmod implements ModInitializer {
 
 		LOGGER.info(path_);
 		LOGGER.info("Hello Fabric world!");
-
-		// 输出配置信息
 		if (CONFIG.debugMode) {
 			LOGGER.info("Jython Mod Configuration:");
 			LOGGER.info("  Enabled: " + CONFIG.enabled);
@@ -54,6 +54,10 @@ public class Jythonmod implements ModInitializer {
 
 			// 创建 Python 解释器
 			PythonInterpreter interpreter = new PythonInterpreter();
+
+			// 设置logger到Python环境
+			interpreter.set("LOGGER", new PythonLogger(LOGGER));
+			interpreter.set("ENV_TYPE", "common");
 
 			// 从 resources 目录读取 main.py 文件
 			InputStream pythonScript = getClass().getResourceAsStream(CONFIG.scriptPath);

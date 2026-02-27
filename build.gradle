@@ -46,23 +46,28 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	// Jython - Python implementation for Java
+
+	// Jython - Python implementation for Java (include in jar)
 	implementation "org.python:jython-standalone:${project.jython_version}"
+	include "org.python:jython-standalone:${project.jython_version}"
 
 	// Cloth Config - Configuration library with GUI
 	modApi("me.shedaniel.cloth:cloth-config-fabric:15.0.130") {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 
+	// Mod Menu - For in-game mod configuration UI
+	modImplementation "com.terraformersmc:modmenu:17.0.0-beta.2"
+
 }
 
-processResources {
-	inputs.property "version", project.version
+// processResources {
+// 	inputs.property "version", project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
-	}
-}
+// 	filesMatching("fabric.mod.json") {
+// 		expand "version": inputs.properties.version
+// 	}
+// }
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
