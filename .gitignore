@@ -40,3 +40,4 @@ replay_*.log
 *.jfr
 
 custom/
+custom/output/directory/jython-mod-1.0.0-dev.jar

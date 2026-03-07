@@ -96,7 +96,6 @@ java {
 }
 
 jar {
-	destinationDirectory.set(file('custom/output/directory'))
 	inputs.property "archivesName", project.base.archivesName
 
 	from("LICENSE") {
