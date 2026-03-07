@@ -23,9 +23,6 @@
 		],
 		"server": [
 			"net.luojiayuan.jython.mod.JythonModServer"
-		],
-		"modmenu": [
-			"net.luojiayuan.jython.mod.config.ModMenuIntegration"
 		]
 	},
 	"mixins": [
@@ -38,6 +35,5 @@
 		"fabric-api": "*"
 	},
 	"recommends": {
-		"modmenu": "*"
 	}
 }

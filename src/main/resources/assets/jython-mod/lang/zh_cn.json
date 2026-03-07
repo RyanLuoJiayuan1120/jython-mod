@@ -1,19 +1,3 @@
 {
-  "text.autoconfig.jython-mod.title": "Jython Mod 配置",
-  "text.autoconfig.jython-mod.category.default": "通用设置",
-  "text.autoconfig.jython-mod.option.enabled": "启用模组",
-  "text.autoconfig.jython-mod.option.enabled.@Tooltip": "是否启用 Jython 模组功能",
-  "text.autoconfig.jython-mod.option.debugMode": "调试模式",
-  "text.autoconfig.jython-mod.option.debugMode.@Tooltip": "开启后会在控制台输出详细日志",
-  "text.autoconfig.jython-mod.option.scriptPath": "脚本路径",
-  "text.autoconfig.jython-mod.option.scriptPath.@Tooltip": "Python 脚本文件路径（相对于 resources 目录）\n修改后需要重启游戏生效",
-  "text.autoconfig.jython-mod.option.autoReload": "自动重载",
-  "text.autoconfig.jython-mod.option.autoReload.@Tooltip": "是否在脚本修改后自动重新加载",
-  "text.autoconfig.jython-mod.option.scriptTimeout": "脚本超时时间",
-  "text.autoconfig.jython-mod.option.scriptTimeout.@Tooltip": "脚本执行的最大时间（秒）\n范围：1-300 秒",
-  "text.autoconfig.jython-mod.option.showPythonOutput": "显示 Python 输出",
-  "text.autoconfig.jython-mod.option.showPythonOutput.@Tooltip": "是否在 Minecraft 控制台显示 Python 的 print 输出",
-  "text.autoconfig.jython-mod.option.pythonPath": "Python 系统路径",
-  "text.autoconfig.jython-mod.option.pythonPath.@Tooltip": "额外的 Python 模块搜索路径\n多个路径用逗号分隔\n例如：/path/to/libs,/another/path",
-  "text.autoconfig.jython-mod.option.modsPaths": "模组包路径(英文分号隔开,Jython写得哈)"
+	"jython-mod.hello": "你好 Fabric 世界！"
 }
