@@ -209,6 +209,14 @@ Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
 - `str` 和 `unicode` 是不同的类型
 - 没有 `range` 函数，使用 `xrange` 代替
 
+### 关于Mixin
+
+> Mixin 是 Fabric 生态系统中强大重要的工具，其主要用途是修改基本游戏中的已存在的代码，
+> 可以是通过注入自定义的逻辑、移除机制或者修改值。注意 Mixin 只能使用 Java 语言编写，即便你的项目使用 Kotlin 或者其他语言。
+>                                               ———— Fabric Wiki
+
+所以我们不会支持Mixin
+
 ## 许可证
 
 本项目采用 CC0-1.0 许可证 - 详见 [LICENSE](LICENSE) 文件
