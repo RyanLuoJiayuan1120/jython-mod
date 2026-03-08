@@ -3,21 +3,41 @@ import sys, os, zipimport, zipfile, shutil
 from net.luojiayuan.jython.mod.utils import path, GameDirHelper
 from net.luojiayuan.jython.mod import Jythonmod
 
+# 设置默认编码为UTF-8（Python 2兼容）
+if sys.version_info[0] == 2:
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
 # 获取logger（由Java传入）
 try:
 	LOGGER = LOGGER
 except NameError:
 	# 如果没有传入logger，使用默认的print
 	class DefaultLogger:
-		def info(self, msg): print("[INFO] " + str(msg))
-		def warn(self, msg): print("[WARN] " + str(msg))
-		def warning(self, msg): print("[WARN] " + str(msg))
-		def error(self, msg): print("[ERROR] " + str(msg))
-		def debug(self, msg): print("[DEBUG] " + str(msg))
+		def _safe_print(self, prefix, msg):
+			"""安全地打印消息，处理编码问题"""
+			try:
+				print(prefix + " " + str(msg))
+			except UnicodeEncodeError:
+				# 如果编码失败，使用ASCII安全输出
+				safe_msg = str(msg).encode('ascii', errors='replace').decode('ascii')
+				print(prefix + " " + safe_msg)
+
+		def info(self, msg): self._safe_print("[INFO]", msg)
+		def warn(self, msg): self._safe_print("[WARN]", msg)
+		def warning(self, msg): self._safe_print("[WARN]", msg)
+		def error(self, msg): self._safe_print("[ERROR]", msg)
+		def debug(self, msg): self._safe_print("[DEBUG]", msg)
 	LOGGER = DefaultLogger()
 
 MODPATH = Jythonmod.CONFIG.modsPaths
-REMODPATH=str(MODPATH).replace("{gamedir}", GameDirHelper.getGameDirPath()).replace("//", "/").replace("\\\\", "\\").split(";")
+game_dir = GameDirHelper.getGameDirPath()
+# 确保路径使用UTF-8编码
+if isinstance(MODPATH, unicode):
+    modpath_str = MODPATH.encode('utf-8')
+else:
+    modpath_str = str(MODPATH)
+REMODPATH = modpath_str.replace("{gamedir}", game_dir).replace("//", "/").replace("\\\\", "\\").split(";")
 
 class ModImporter:
     def __init__(self):
@@ -68,45 +88,41 @@ for path in REMODPATH:
 
         for i in file_list:
             try:
-                full_path = os.path.join(path, str(i))
+                # 确保文件名使用UTF-8编码
+                if isinstance(i, unicode):
+                    i_str = i.encode('utf-8')
+                else:
+                    i_str = str(i)
+                full_path = os.path.join(path, i_str)
                 LOGGER.info("Loading: " + full_path)
                 importer.import_(full_path)
             except Exception as e:
-                LOGGER.error("Error loading " + str(i) + ": " + str(e))
+                # 安全地输出错误信息，避免编码错误
+                try:
+                    LOGGER.error("Error loading " + str(i) + ": " + str(e))
+                except UnicodeEncodeError:
+                    LOGGER.error("Error loading file (encoding error in filename): " + repr(i))
     except Exception as e:
         LOGGER.error("Error scanning path " + path + ": " + str(e))
 
 LOGGER.info("Loaded main modules: " + str(importer.libs))
 LOGGER.info("Loaded client modules: " + str(importer.libs_client))
 LOGGER.info("Loaded server modules: " + str(importer.libs_server))
-
-# ============ 资源包处理 ============
 LOGGER.info("Building resource pack from mod resources...")
-
-# 创建临时目录存放所有资源
 gamedir = GameDirHelper.getGameDirPath()
 temp_res_dir = gamedir + "/jython_mod_temp_res"
 final_res_pack = gamedir + "/resourcepacks/JythonModAssets.zip"
-
-# 需要打包的资源文件夹列表
 resource_folders = ['assets', 'atlases', 'blockstates', 'equipment', 'font',
                    'items', 'lang', 'models', 'particles', 'post_effect',
                    'sounds', 'shaders', 'texts', 'textures', 'waypoint_style']
-
-# 需要打包的文件列表（根目录文件）
 resource_files = ['gpu_warnlist.json', 'regional_compliancies.json', 'sounds.json']
-
-# 清理旧的临时目录
 if os.path.exists(temp_res_dir):
     shutil.rmtree(temp_res_dir)
-# 兼容Python 2的方式创建目录
 try:
     os.makedirs(temp_res_dir)
 except OSError:
     if not os.path.isdir(temp_res_dir):
         raise
-
-# 遍历所有zip文件，提取所有资源
 resources_collected = False
 for base_path in REMODPATH:
     if not os.path.isdir(base_path):
@@ -133,20 +149,38 @@ for base_path in REMODPATH:
                                 break
 
                         if is_resource and not name.endswith('/'):
-                            # 解压到临时目录
-                            zf.extract(name, temp_res_dir)
+                            try:
+                                zf.extract(name, temp_res_dir)
+                            except UnicodeDecodeError:
+                                import io
+                                data = zf.read(name)
+                                if isinstance(name, unicode):
+                                    arcname_utf8 = name.encode('utf-8')
+                                else:
+                                    arcname_utf8 = name.decode('utf-8', errors='ignore').encode('utf-8')
+                                target_path = os.path.join(temp_res_dir, arcname_utf8)
+                                target_dir = os.path.dirname(target_path)
+                                if not os.path.exists(target_dir):
+                                    os.makedirs(target_dir)
+                                with io.open(target_path, 'wb') as f:
+                                    f.write(data)
                             extracted = True
 
                     if extracted:
-                        LOGGER.info("Extracted resources from: " + filename)
+                        try:
+                            LOGGER.info("Extracted resources from: " + filename)
+                        except UnicodeEncodeError:
+                            LOGGER.info("Extracted resources from file")
                         resources_collected = True
             except Exception as e:
-                LOGGER.warning("Failed to extract resources from " + filename + ": " + str(e))
+                try:
+                    LOGGER.warning("Failed to extract resources from " + filename + ": " + str(e))
+                except UnicodeEncodeError:
+                    LOGGER.warning("Failed to extract resources (encoding error)")
     except Exception as e:
         LOGGER.warning("Failed to scan path " + base_path + ": " + str(e))
 
 if resources_collected:
-    # 创建pack.mcmeta
     import json
     from net.luojiayuan.jython.mod.utils import ResourcePackHelper
     pack_meta = {
@@ -157,8 +191,6 @@ if resources_collected:
     }
     with open(temp_res_dir + "/pack.mcmeta", 'w') as f:
         json.dump(pack_meta, f)
-
-    # 打包成zip
     LOGGER.info("Creating resource pack: " + final_res_pack)
     with zipfile.ZipFile(final_res_pack, 'w', zipfile.ZIP_DEFLATED) as zf:
         for root, dirs, files in os.walk(temp_res_dir):
@@ -166,27 +198,17 @@ if resources_collected:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, temp_res_dir)
                 zf.write(file_path, arcname)
-
-    # 清理临时目录
     shutil.rmtree(temp_res_dir)
     LOGGER.info("Resource pack created successfully!")
-
-    # 自动启用资源包
     ResourcePackHelper.enableResourcePack("JythonModAssets.zip")
 else:
-    # 清理空的临时目录
     if os.path.exists(temp_res_dir):
         shutil.rmtree(temp_res_dir)
     LOGGER.info("No resources found in mods, skipping resource pack creation")
 
-# ============ 数据包处理 ============
 LOGGER.info("Building datapack from mod data...")
-
-# 创建临时目录存放所有数据
 temp_data_dir = gamedir + "/jython_mod_temp_data"
 final_data_pack = gamedir + "/resourcepacks/JythonModData.zip"
-
-# 清理旧的临时目录
 if os.path.exists(temp_data_dir):
     shutil.rmtree(temp_data_dir)
 try:
@@ -194,8 +216,6 @@ try:
 except OSError:
     if not os.path.isdir(temp_data_dir):
         raise
-
-# 遍历所有zip文件，提取data文件夹
 data_collected = False
 for base_path in REMODPATH:
     if not os.path.isdir(base_path):
@@ -207,23 +227,41 @@ for base_path in REMODPATH:
             zip_path = os.path.join(base_path, filename)
             try:
                 with zipfile.ZipFile(zip_path, 'r') as zf:
-                    # 提取data文件夹
                     extracted = False
                     for name in zf.namelist():
                         if name.startswith('data/') and not name.endswith('/'):
-                            zf.extract(name, temp_data_dir)
+                            try:
+                                zf.extract(name, temp_data_dir)
+                            except UnicodeDecodeError:
+                                import io
+                                data = zf.read(name)
+                                if isinstance(name, unicode):
+                                    arcname_utf8 = name.encode('utf-8')
+                                else:
+                                    arcname_utf8 = name.decode('utf-8', errors='ignore').encode('utf-8')
+                                target_path = os.path.join(temp_data_dir, arcname_utf8)
+                                target_dir = os.path.dirname(target_path)
+                                if not os.path.exists(target_dir):
+                                    os.makedirs(target_dir)
+                                with io.open(target_path, 'wb') as f:
+                                    f.write(data)
                             extracted = True
 
                     if extracted:
-                        LOGGER.info("Extracted data from: " + filename)
+                        try:
+                            LOGGER.info("Extracted data from: " + filename)
+                        except UnicodeEncodeError:
+                            LOGGER.info("Extracted data from file")
                         data_collected = True
             except Exception as e:
-                LOGGER.warning("Failed to extract data from " + filename + ": " + str(e))
+                try:
+                    LOGGER.warning("Failed to extract data from " + filename + ": " + str(e))
+                except UnicodeEncodeError:
+                    LOGGER.warning("Failed to extract data (encoding error)")
     except Exception as e:
         LOGGER.warning("Failed to scan path " + base_path + ": " + str(e))
 
 if data_collected:
-    # 创建pack.mcmeta（数据包格式）
     import json
     pack_meta = {
         "pack": {
@@ -233,8 +271,6 @@ if data_collected:
     }
     with open(temp_data_dir + "/pack.mcmeta", 'w') as f:
         json.dump(pack_meta, f)
-
-    # 打包成zip到内存
     LOGGER.info("Creating datapack...")
     import StringIO
     zip_buffer = StringIO.StringIO()
@@ -244,8 +280,6 @@ if data_collected:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, temp_data_dir)
                 zf.write(file_path, arcname)
-
-    # 遍历所有存档，复制数据包
     saves_dir = gamedir + "/saves"
     if os.path.exists(saves_dir):
         saves_copied = 0
@@ -253,38 +287,35 @@ if data_collected:
             save_path = os.path.join(saves_dir, save_name)
             if os.path.isdir(save_path):
                 datapacks_dir = os.path.join(save_path, "datapacks")
-                # 确保datapacks目录存在
                 if not os.path.exists(datapacks_dir):
                     try:
                         os.makedirs(datapacks_dir)
                     except OSError:
                         if not os.path.isdir(datapacks_dir):
                             continue
-
-                # 写入数据包文件
                 datapack_path = os.path.join(datapacks_dir, "JythonModData.zip")
                 try:
                     with open(datapack_path, 'wb') as f:
                         f.write(zip_buffer.getvalue())
                     saves_copied += 1
-                    LOGGER.info("Copied datapack to save: " + save_name)
+                    try:
+                        LOGGER.info("Copied datapack to save: " + save_name)
+                    except UnicodeEncodeError:
+                        LOGGER.info("Copied datapack to save")
                 except Exception as e:
-                    LOGGER.warning("Failed to copy datapack to " + save_name + ": " + str(e))
+                    try:
+                        LOGGER.warning("Failed to copy datapack to " + save_name + ": " + str(e))
+                    except UnicodeEncodeError:
+                        LOGGER.warning("Failed to copy datapack (encoding error)")
 
         LOGGER.info("Datapack created and copied to " + str(saves_copied) + " save(s)!")
     else:
         LOGGER.info("No saves directory found, skipping datapack installation")
-
-    # 清理临时目录
     shutil.rmtree(temp_data_dir)
 else:
-    # 清理空的临时目录
     if os.path.exists(temp_data_dir):
         shutil.rmtree(temp_data_dir)
     LOGGER.info("No data found in mods, skipping datapack creation")
-
-# ============ 运行模块 ============
-# main的 - 在common/main中运行
 for mod in importer.libs:
     try:
         if hasattr(mod, 'main'):
