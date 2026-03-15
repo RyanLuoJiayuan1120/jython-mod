@@ -243,3 +243,4 @@ Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
 ---
 
 **注意**: 本项目仍在开发中，可能会有一些不完善的地方。欢迎提供反馈和建议！
+Discord: [https://discord.gg/FfkFkdhb](https://discord.gg/FfkFkdhb)
