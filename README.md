@@ -221,6 +221,8 @@ Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
 
 本项目采用 CC0-1.0 许可证 - 详见 [LICENSE](LICENSE) 文件
 
+**免责声明：本人不承担任何因为安装不正当的jython模组导致的任何后果**
+
 ## 作者
 
 - RyanLuo2011
@@ -232,7 +234,7 @@ Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request！（不准提交屎山代码，不准提交混淆代码）
 
 ## 致谢
 
