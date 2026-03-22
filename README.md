@@ -1,3 +1,5 @@
+# 食用前提示：Jython≠Python！！！！！
+
 # Jython Mod
 
 一个基于 Jython 的 Minecraft Fabric 模组，允许使用 Jython 语言编写模组功能。
@@ -39,7 +41,7 @@ Jython Mod 是一个创新的 Minecraft Fabric 模组，它集成了 Jython 引�
   "enabled": true,
   "debugMode": false,
   "scriptPath": "/assets/jython-mod/jython/main.py",
-  "modsPaths": "{gamedir}/jython-mods",
+  "modsPaths": "{gamedir}/jymods",
   "autoReload": false,
   "scriptTimeout": 30
 }
@@ -58,8 +60,7 @@ Jython Mod 是一个创新的 Minecraft Fabric 模组，它集成了 Jython 引�
 
 ### 创建 Jython 模块
 
-1. 在游戏目录下创建 `jython-mods` 文件夹
-2. 创建一个 ZIP 文件，包含以下结构：
+1. 创建一个 ZIP 文件，包含以下结构：
    ```
    your_mod.zip
    ├── main.py          # 主模块（公共环境）
@@ -202,24 +203,19 @@ cd jython-mod
 
 如果脚本执行时间过长，可以在配置中增加 `scriptTimeout` 的值。
 
-### Jython 语法错误
-
-Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
-- 使用 `print "text"` 而不是 `print("text")`
-- `str` 和 `unicode` 是不同的类型
-- 没有 `range` 函数，使用 `xrange` 代替
-
 ### 关于Mixin
 
 > Mixin 是 Fabric 生态系统中强大重要的工具，其主要用途是修改基本游戏中的已存在的代码，
 > 可以是通过注入自定义的逻辑、移除机制或者修改值。注意 Mixin 只能使用 Java 语言编写，即便你的项目使用 Kotlin 或者其他语言。
 >                                               ———— Fabric Wiki
 
-所以我们不会支持Mixin
+所以我们不会支持Mixin（ 除非枚举（大雾））
 
 ## 许可证
 
 本项目采用 CC0-1.0 许可证 - 详见 [LICENSE](LICENSE) 文件
+
+**免责声明：本人不承担任何因为安装不正当的jython模组导致的任何后果**
 
 ## 作者
 
@@ -232,7 +228,7 @@ Jython 使用 Jython 2.7 语法，请注意与 Jython 3 的区别：
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request！（不准提交屎山代码，不准提交混淆代码）
 
 ## 致谢
 
