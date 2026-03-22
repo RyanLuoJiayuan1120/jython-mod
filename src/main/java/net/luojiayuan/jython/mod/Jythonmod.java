@@ -54,8 +54,6 @@ public class Jythonmod implements ModInitializer {
 			LOGGER.info("Jython Mod is disabled in config.");
 			return;
 		}
-
-		// Jython使用示例 - 导入并执行 main.py
 		try {
 			LOGGER.info("Initializing Jython environment...");
 
