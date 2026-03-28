@@ -108,103 +108,111 @@ for path in REMODPATH:
 LOGGER.info("Loaded main modules: " + str(importer.libs))
 LOGGER.info("Loaded client modules: " + str(importer.libs_client))
 LOGGER.info("Loaded server modules: " + str(importer.libs_server))
-LOGGER.info("Building resource pack from mod resources...")
+
+# ======== res ========
 gamedir = GameDirHelper.getGameDirPath()
-temp_res_dir = gamedir + "/jython_mod_temp_res"
-final_res_pack = gamedir + "/resourcepacks/JythonModAssets.zip"
-resource_folders = ['assets', 'atlases', 'blockstates', 'equipment', 'font',
-                   'items', 'lang', 'models', 'particles', 'post_effect',
-                   'sounds', 'shaders', 'texts', 'textures', 'waypoint_style']
-resource_files = ['gpu_warnlist.json', 'regional_compliancies.json', 'sounds.json']
-if os.path.exists(temp_res_dir):
-    shutil.rmtree(temp_res_dir)
 try:
-    os.makedirs(temp_res_dir)
-except OSError:
-    if not os.path.isdir(temp_res_dir):
-        raise
-resources_collected = False
-for base_path in REMODPATH:
-    if not os.path.isdir(base_path):
-        continue
-    try:
-        for filename in os.listdir(base_path):
-            if not filename.endswith('.zip'):
+    ENV_TYPE = ENV_TYPE
+    if ENV_TYPE == "server":
+        LOGGER.info("Building resource pack from mod resources...")
+        temp_res_dir = gamedir + "/jython_mod_temp_res"
+        final_res_pack = gamedir + "/resourcepacks/JythonModAssets.zip"
+        resource_folders = ['assets', 'atlases', 'blockstates', 'equipment', 'font',
+                        'items', 'lang', 'models', 'particles', 'post_effect',
+                        'sounds', 'shaders', 'texts', 'textures', 'waypoint_style']
+        resource_files = ['gpu_warnlist.json', 'regional_compliancies.json', 'sounds.json']
+        if os.path.exists(temp_res_dir):
+            shutil.rmtree(temp_res_dir)
+        try:
+            os.makedirs(temp_res_dir)
+        except OSError:
+            if not os.path.isdir(temp_res_dir):
+                raise
+        resources_collected = False
+        for base_path in REMODPATH:
+            if not os.path.isdir(base_path):
                 continue
-            zip_path = os.path.join(base_path, filename)
             try:
-                with zipfile.ZipFile(zip_path, 'r') as zf:
-                    # 提取所有资源文件夹和文件
-                    extracted = False
-                    for name in zf.namelist():
-                        # 检查是否是资源文件夹或文件
-                        is_resource = False
-                        for folder in resource_folders:
-                            if name.startswith(folder + '/') or name == folder:
-                                is_resource = True
-                                break
-                        for file in resource_files:
-                            if name == file:
-                                is_resource = True
-                                break
+                for filename in os.listdir(base_path):
+                    if not filename.endswith('.zip'):
+                        continue
+                    zip_path = os.path.join(base_path, filename)
+                    try:
+                        with zipfile.ZipFile(zip_path, 'r') as zf:
+                            # 提取所有资源文件夹和文件
+                            extracted = False
+                            for name in zf.namelist():
+                                # 检查是否是资源文件夹或文件
+                                is_resource = False
+                                for folder in resource_folders:
+                                    if name.startswith(folder + '/') or name == folder:
+                                        is_resource = True
+                                        break
+                                for file in resource_files:
+                                    if name == file:
+                                        is_resource = True
+                                        break
 
-                        if is_resource and not name.endswith('/'):
-                            try:
-                                zf.extract(name, temp_res_dir)
-                            except UnicodeDecodeError:
-                                import io
-                                data = zf.read(name)
-                                if isinstance(name, unicode):
-                                    arcname_utf8 = name.encode('utf-8')
-                                else:
-                                    arcname_utf8 = name.decode('utf-8', errors='ignore').encode('utf-8')
-                                target_path = os.path.join(temp_res_dir, arcname_utf8)
-                                target_dir = os.path.dirname(target_path)
-                                if not os.path.exists(target_dir):
-                                    os.makedirs(target_dir)
-                                with io.open(target_path, 'wb') as f:
-                                    f.write(data)
-                            extracted = True
+                                if is_resource and not name.endswith('/'):
+                                    try:
+                                        zf.extract(name, temp_res_dir)
+                                    except UnicodeDecodeError:
+                                        import io
+                                        data = zf.read(name)
+                                        if isinstance(name, unicode):
+                                            arcname_utf8 = name.encode('utf-8')
+                                        else:
+                                            arcname_utf8 = name.decode('utf-8', errors='ignore').encode('utf-8')
+                                        target_path = os.path.join(temp_res_dir, arcname_utf8)
+                                        target_dir = os.path.dirname(target_path)
+                                        if not os.path.exists(target_dir):
+                                            os.makedirs(target_dir)
+                                        with io.open(target_path, 'wb') as f:
+                                            f.write(data)
+                                    extracted = True
 
-                    if extracted:
+                            if extracted:
+                                try:
+                                    LOGGER.info("Extracted resources from: " + filename)
+                                except UnicodeEncodeError:
+                                    LOGGER.info("Extracted resources from file")
+                                resources_collected = True
+                    except Exception as e:
                         try:
-                            LOGGER.info("Extracted resources from: " + filename)
+                            LOGGER.warning("Failed to extract resources from " + filename + ": " + str(e))
                         except UnicodeEncodeError:
-                            LOGGER.info("Extracted resources from file")
-                        resources_collected = True
+                            LOGGER.warning("Failed to extract resources (encoding error)")
             except Exception as e:
-                try:
-                    LOGGER.warning("Failed to extract resources from " + filename + ": " + str(e))
-                except UnicodeEncodeError:
-                    LOGGER.warning("Failed to extract resources (encoding error)")
-    except Exception as e:
-        LOGGER.warning("Failed to scan path " + base_path + ": " + str(e))
+                LOGGER.warning("Failed to scan path " + base_path + ": " + str(e))
 
-if resources_collected:
-    import json
-    from net.luojiayuan.jython.mod.utils import ResourcePackHelper
-    pack_meta = {
-        "pack": {
-            "pack_format": 48,
-            "description": "Jython Mod Resources - Generated from mod resources"
-        }
-    }
-    with open(temp_res_dir + "/pack.mcmeta", 'w') as f:
-        json.dump(pack_meta, f)
-    LOGGER.info("Creating resource pack: " + final_res_pack)
-    with zipfile.ZipFile(final_res_pack, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for root, dirs, files in os.walk(temp_res_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                arcname = os.path.relpath(file_path, temp_res_dir)
-                zf.write(file_path, arcname)
-    shutil.rmtree(temp_res_dir)
-    LOGGER.info("Resource pack created successfully!")
-    ResourcePackHelper.enableResourcePack("JythonModAssets.zip")
-else:
-    if os.path.exists(temp_res_dir):
-        shutil.rmtree(temp_res_dir)
-    LOGGER.info("No resources found in mods, skipping resource pack creation")
+        if resources_collected:
+            import json
+            from net.luojiayuan.jython.mod.utils import ResourcePackHelper
+            pack_meta = {
+                "pack": {
+                    "pack_format": 48,
+                    "description": "Jython Mod Resources - Generated from mod resources"
+                }
+            }
+            with open(temp_res_dir + "/pack.mcmeta", 'w') as f:
+                json.dump(pack_meta, f)
+            LOGGER.info("Creating resource pack: " + final_res_pack)
+            with zipfile.ZipFile(final_res_pack, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for root, dirs, files in os.walk(temp_res_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, temp_res_dir)
+                        zf.write(file_path, arcname)
+            shutil.rmtree(temp_res_dir)
+            LOGGER.info("Resource pack created successfully!")
+            ResourcePackHelper.enableResourcePack("JythonModAssets.zip")
+        else:
+            if os.path.exists(temp_res_dir):
+                shutil.rmtree(temp_res_dir)
+            LOGGER.info("No resources found in mods, skipping resource pack creation")
+
+except:LOGGER.warn("Don't pack resources pack, because there are some errors,or there's server")
+
 
 LOGGER.info("Building datapack from mod data...")
 temp_data_dir = gamedir + "/jython_mod_temp_data"
