@@ -11,6 +11,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import org.python.core.PyObject;
 
 /*
 * 方块类
@@ -39,6 +40,31 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 */
 
 public class block {
+
+	/**
+	 * 注册方块（Jython版本 - 接受PyObject）
+	 *
+	 * @param name 方块名称（不含模组ID前缀）
+	 * @param ModName 模组ID
+	 * @param pyCallable Python可调用对象（函数或lambda）
+	 * @param settings 方块属性
+	 * @param shouldRegisterItem 是否注册对应的物品
+	 * @return 注册的方块实例
+	 */
+	public static Block register(String name, String ModName, PyObject pyCallable,
+			BlockBehaviour.Properties settings, boolean shouldRegisterItem) {
+		// 将Python函数转换为Java Function
+		Function<BlockBehaviour.Properties, Block> blockFactory = new Function<BlockBehaviour.Properties, Block>() {
+			@Override
+			public Block apply(BlockBehaviour.Properties props) {
+				// 调用Python函数
+				PyObject result = pyCallable.__call__(org.python.core.Py.java2py(props));
+				return (Block) result.__tojava__(Block.class);
+			}
+		};
+
+		return register(name, ModName, blockFactory, settings, shouldRegisterItem);
+	}
 
 	/**
 	 * 注册方块
