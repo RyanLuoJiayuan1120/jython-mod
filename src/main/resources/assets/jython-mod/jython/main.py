@@ -39,23 +39,45 @@ else:
     modpath_str = str(MODPATH)
 REMODPATH = modpath_str.replace("{gamedir}", game_dir).replace("//", "/").replace("\\\\", "\\").split(";")
 
+# 去重路径列表，避免重复扫描
+seen_paths = {}
+unique_paths = []
+for path in REMODPATH:
+    normalized = os.path.normpath(path)
+    if normalized and not seen_paths.has_key(normalized):
+        seen_paths[normalized] = True
+        unique_paths.append(normalized)
+REMODPATH = unique_paths
+
+LOGGER.debug("Mod paths after deduplication: " + str(REMODPATH))
+
 class ModImporter:
     def __init__(self):
-        self.libs = []
-        self.libs_client = []
-        self.libs_server = []
+        # 使用字典存储，key为路径，value为模块对象
+        self.libs = {}
+        self.libs_client = {}
+        self.libs_server = {}
 
     def import_(self, path):
+        # 标准化路径，避免因路径格式不同导致的重复加载
+        normalized_path = os.path.normpath(path)
+
+        # 检查是否已加载过此路径
+        if self.libs.has_key(normalized_path):
+            LOGGER.debug("Skipping already loaded module: " + str(path))
+            return
+
         LOGGER.info("Loading module from: " + str(path))
+        LOGGER.info("loaded:"+str(self.libs.keys()))
         importer = zipimport.zipimporter(path)
-        self.libs.append(importer.load_module("main"))
+        self.libs[normalized_path] = importer.load_module("main")
         try:
-            self.libs_client.append(importer.load_module("client"))
+            self.libs_client[normalized_path] = importer.load_module("client")
             LOGGER.info("Loaded client module from: " + str(path))
         except Exception as e:
             LOGGER.debug("No client module in " + str(path) + ": " + str(e))
         try:
-            self.libs_server.append(importer.load_module("server"))
+            self.libs_server[normalized_path] = importer.load_module("server")
             LOGGER.info("Loaded server module from: " + str(path))
         except Exception as e:
             LOGGER.debug("No server module in " + str(path) + ": " + str(e))
@@ -76,17 +98,17 @@ for path in REMODPATH:
 
     # 安全地遍历目录
     try:
-        walk_result = list(os.walk(path))
-        if not walk_result:
-            LOGGER.info("No files found in: " + path)
+        # 直接列出顶层目录的文件，避免子目录重复
+        file_list = os.listdir(path)
+        # 只处理.zip文件
+        zip_files = [f for f in file_list if f.endswith('.zip')]
+        if not zip_files:
+            LOGGER.info("No zip files found in: " + path)
             continue
 
-        # walk_result[0] 是 (dirpath, dirnames, filenames)
-        # 我们需要 filenames (索引2)
-        file_list = walk_result[0][2] if len(walk_result[0]) > 2 else []
-        LOGGER.info("Found files: " + str(file_list))
+        LOGGER.info("Found zip files: " + str(zip_files))
 
-        for i in file_list:
+        for i in zip_files:
             try:
                 # 确保文件名使用UTF-8编码
                 if isinstance(i, unicode):
@@ -105,9 +127,9 @@ for path in REMODPATH:
     except Exception as e:
         LOGGER.error("Error scanning path " + path + ": " + str(e))
 
-LOGGER.info("Loaded main modules: " + str(importer.libs))
-LOGGER.info("Loaded client modules: " + str(importer.libs_client))
-LOGGER.info("Loaded server modules: " + str(importer.libs_server))
+LOGGER.info("Loaded main modules: " + str(importer.libs.keys()))
+LOGGER.info("Loaded client modules: " + str(importer.libs_client.keys()))
+LOGGER.info("Loaded server modules: " + str(importer.libs_server.keys()))
 
 # ======== res ========
 gamedir = GameDirHelper.getGameDirPath()
@@ -288,45 +310,81 @@ if data_collected:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, temp_data_dir)
                 zf.write(file_path, arcname)
+
+    # 收集所有可能的世界目录
+    world_dirs = []
+
+    # 1. 检查 gamedir/saves/ 目录（客户端世界）
     saves_dir = gamedir + "/saves"
     if os.path.exists(saves_dir):
-        saves_copied = 0
         for save_name in os.listdir(saves_dir):
             save_path = os.path.join(saves_dir, save_name)
             if os.path.isdir(save_path):
-                datapacks_dir = os.path.join(save_path, "datapacks")
-                if not os.path.exists(datapacks_dir):
-                    try:
-                        os.makedirs(datapacks_dir)
-                    except OSError:
-                        if not os.path.isdir(datapacks_dir):
-                            continue
-                datapack_path = os.path.join(datapacks_dir, "JythonModData.zip")
+                world_dirs.append(save_path)
+
+    # 2. 检查 gamedir/ 下的直接子目录（服务器世界）
+    # 在服务器模式下，world 文件夹通常直接在游戏目录下
+    try:
+        for item in os.listdir(gamedir):
+            item_path = os.path.join(gamedir, item)
+            # 检查是否是世界目录（包含 level.dat 和 datapacks 文件夹）
+            if os.path.isdir(item_path):
+                level_dat = os.path.join(item_path, "level.dat")
+                if os.path.exists(level_dat):
+                    # 确保不是已经在 saves 目录中的
+                    if not item_path.startswith(saves_dir + os.sep):
+                        world_dirs.append(item_path)
+    except Exception as e:
+        LOGGER.debug("Error scanning gamedir for worlds: " + str(e))
+
+    # 复制数据包到所有世界
+    if world_dirs:
+        saves_copied = 0
+        for save_path in world_dirs:
+            save_name = os.path.basename(save_path)
+            datapacks_dir = os.path.join(save_path, "datapacks")
+            if not os.path.exists(datapacks_dir):
                 try:
-                    with open(datapack_path, 'wb') as f:
-                        f.write(zip_buffer.getvalue())
-                    saves_copied += 1
-                    try:
-                        LOGGER.info("Copied datapack to save: " + save_name)
-                    except UnicodeEncodeError:
-                        LOGGER.info("Copied datapack to save")
-                except Exception as e:
-                    try:
-                        LOGGER.warning("Failed to copy datapack to " + save_name + ": " + str(e))
-                    except UnicodeEncodeError:
-                        LOGGER.warning("Failed to copy datapack (encoding error)")
+                    os.makedirs(datapacks_dir)
+                except OSError:
+                    if not os.path.isdir(datapacks_dir):
+                        continue
+            datapack_path = os.path.join(datapacks_dir, "JythonModData.zip")
+            try:
+                with open(datapack_path, 'wb') as f:
+                    f.write(zip_buffer.getvalue())
+                saves_copied += 1
+                try:
+                    LOGGER.info("Copied datapack to save: " + save_name)
+                except UnicodeEncodeError:
+                    LOGGER.info("Copied datapack to save")
+            except Exception as e:
+                try:
+                    LOGGER.warning("Failed to copy datapack to " + save_name + ": " + str(e))
+                except UnicodeEncodeError:
+                    LOGGER.warning("Failed to copy datapack (encoding error)")
 
         LOGGER.info("Datapack created and copied to " + str(saves_copied) + " save(s)!")
+
+        # 自动启用数据包
+        try:
+            from net.luojiayuan.jython.mod.utils import DatapackHelper
+            DatapackHelper.enableDatapack("JythonModData.zip")
+            LOGGER.info("Datapack enabled successfully!")
+        except Exception as e:
+            LOGGER.warning("Failed to auto-enable datapack: " + str(e))
     else:
-        LOGGER.info("No saves directory found, skipping datapack installation")
+        LOGGER.info("No world directories found, skipping datapack installation")
     shutil.rmtree(temp_data_dir)
 else:
     if os.path.exists(temp_data_dir):
         shutil.rmtree(temp_data_dir)
     LOGGER.info("No data found in mods, skipping datapack creation")
-for mod in importer.libs:
-    try:
-        if hasattr(mod, 'main'):
-            mod.main()
-    except Exception as e:
-        LOGGER.error("error at running main in " + str(mod.__file__) + ": " + str(e))
+# Only run mod.main() in common environment (not in client/server)
+if ENV_TYPE == "common":
+    for mod_path, mod in importer.libs.items():
+        try:
+            if hasattr(mod, 'main'):
+                mod.main()
+        except Exception as e:
+            LOGGER.error("error at running main in " + str(mod_path) + ": " + str(e))

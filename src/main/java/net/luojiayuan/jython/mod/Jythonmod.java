@@ -56,13 +56,10 @@ public class Jythonmod implements ModInitializer {
 		}
 		try {
 			LOGGER.info("Initializing Jython environment...");
-
-			// 关键：设置系统属性，让 Jython 能找到内置的 Lib 目录
 			// 在打包的 JAR 中，Lib 目录位于根目录
 			String pythonHome = "/";
 			System.setProperty("python.home", pythonHome);
 			System.setProperty("python.path", "/Lib");
-
 			LOGGER.info("Set python.home=" + pythonHome);
 			LOGGER.info("Set python.path=/Lib");
 
