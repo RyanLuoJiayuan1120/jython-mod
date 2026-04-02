@@ -593,6 +593,134 @@ from net.luojiayuan.jython.mod.libs import block
 block.register(name, modid, factory, properties, has_item)
 ```
 
+### MinecraftClasses - Minecraft 类辅助工具
+
+`MinecraftClasses` 是一个便捷的辅助类，用于简化从 Jython 访问 Minecraft 类的过程。它提供了常用 Minecraft 类的引用和创建实例的静态方法。
+
+**基础用法：**
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+
+# ===== 类引用 =====
+# 访问方块和物品相关的类
+Block = mc.Block                    # Block 类
+Block_Properties = mc.Block_Properties  # BlockBehaviour.Properties 类
+Item = mc.Item                      # Item 类
+Item_Properties = mc.Item_Properties    # Item.Properties 类
+BlockItem = mc.BlockItem            # BlockItem 类
+```
+
+**创建方块示例：**
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+from net.luojiayuan.jython.mod.libs import block
+
+# 方法1: 使用静态方法创建方块属性
+props = mc.createBlockProperties()
+
+# 方法2: 直接创建方块属性
+props = mc.Block_Properties.of()
+
+# 注册方块
+my_block = block.register(
+    "my_block",
+    "mymod",
+    lambda p: mc.Block(p),
+    props,
+    True
+)
+```
+
+**创建物品示例：**
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+from net.luojiayuan.jython.mod.libs import item
+
+# 方法1: 使用静态方法创建物品属性
+item_props = mc.createItemProperties()
+
+# 方法2: 直接创建物品属性
+item_props = mc.Item_Properties()
+
+# 注册物品
+my_item = item.register(
+    "my_item",
+    "mymod",
+    lambda: mc.Item(item_props),
+    item_props
+)
+```
+
+**创建方块物品示例：**
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+from net.minecraft.core import Registry
+from net.minecraft.core.registries import BuiltInRegistries
+from net.minecraft.resources import ResourceKey, Identifier
+from net.minecraft.core.registries import Registries
+
+# 假设已经有了一个方块实例
+my_block = ...  # 你的方块
+
+# 创建方块物品
+item_props = mc.createItemProperties()
+item_key = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("mymod", "my_block"))
+block_item = mc.createBlockItem(my_block, item_props.setId(item_key))
+Registry.register(BuiltInRegistries.ITEM, item_key, block_item)
+```
+
+**完整的物品注册示例（带食物属性）：**
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+from net.luojiayuan.jython.mod.libs import item
+from net.minecraft.world.effect import MobEffects
+from net.minecraft.world.effect import MobEffectInstance
+from net.minecraft.world.food import FoodProperties
+from net.minecraft.world.item.consumables import Consumables
+from net.minecraft.world.item.consumponents import ApplyStatusEffectsConsumeEffect
+
+# 创建毒效果消耗品组件
+poison_effect = MobEffectInstance(MobEffects.POISON, 6 * 20, 1)
+poison_consume_effect = ApplyStatusEffectsConsumeEffect(poison_effect, 1.0)
+POISON_FOOD_CONSUMABLE = Consumables.defaultFood().onConsume(poison_consume_effect).build()
+
+# 创建食物属性
+POISON_FOOD_COMPONENT = FoodProperties.Builder().alwaysEdible().build()
+
+# 创建物品属性并设置食物
+item_props = mc.createItemProperties()
+item_props.food(POISON_FOOD_COMPONENT)
+
+# 注册毒食物
+poison_food = item.register(
+    "poison_food",
+    "mymod",
+    lambda: mc.Item(item_props),
+    item_props
+)
+```
+
+**可用方法列表：**
+
+```python
+# 方块相关
+mc.createBlockProperties()              # 创建方块属性
+mc.createBlock(props)                   # 创建方块实例
+mc.createBlockFromProps(props)          # 从属性创建方块（用于 lambda）
+
+# 物品相关
+mc.createItemProperties()               # 创建物品属性
+mc.createItemSettings()                 # 创建物品设置（别名）
+mc.createItem(props)                    # 创建物品实例
+mc.createItemFromProps(props)           # 从属性创建物品（用于 lambda）
+mc.createBlockItem(block, props)        # 创建方块物品实例
+```
+
 ### 日志 API
 
 ```python

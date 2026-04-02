@@ -58,6 +58,54 @@ Jython Mod 是一个创新的 Minecraft Fabric 模组，它集成了 Jython 引�
 
 ## 使用方法
 
+### 内置辅助库
+
+Jython Mod 提供了多个辅助类来简化 Minecraft 模组开发：
+
+#### MinecraftClasses - Minecraft 类辅助工具
+
+提供对常用 Minecraft 类的便捷访问和实例创建：
+
+```python
+from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
+
+# 创建方块
+props = mc.Block_Properties.of()
+block = mc.Block(props)
+
+# 创建物品
+item_props = mc.Item_Properties()
+item = mc.Item(item_props)
+
+# 或使用静态方法
+props = mc.createBlockProperties()
+item = mc.createItem(mc.createItemProperties())
+```
+
+#### item - 物品注册
+
+简化的物品注册 API：
+
+```python
+from net.minecraft.world.item import Item
+from net.luojiayuan.jython.mod.libs import item
+
+# 注册物品
+my_item = item.register("物品名", "模组ID", lambda: Item(), Item.Properties())
+```
+
+#### block - 方块注册
+
+简化的方块注册 API：
+
+```python
+from net.minecraft.world.level.block import Block
+from net.luojiayuan.jython.mod.libs import block
+
+# 注册方块（自动注册物品）
+my_block = block.register("方块名", "模组ID", lambda props: Block(props), props, True)
+```
+
 ### 创建 Jython 模块
 
 1. 创建一个 ZIP 文件，包含以下结构：

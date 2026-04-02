@@ -8,6 +8,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
+import org.python.core.PyObject;
 
 /*
 * 物品类
@@ -52,8 +53,45 @@ import net.minecraft.world.item.Item;
 
 
 public class item {
+	/**
+	 * 注册物品（Jython版本 - 接受PyObject）
+	 *
+	 * @param name 物品名称（不含模组ID前缀）
+	 * @param ModName 模组ID
+	 * @param pyCallable Python可调用对象（函数或lambda）
+	 * @param settings 物品属性
+	 * @return 注册的物品实例
+	 */
+	public static Item register(String name, String ModName, PyObject pyCallable, Item.Properties settings) {
+		// 将Python函数转换为Java Function
+		Function<Item.Properties, Item> itemFactory = new Function<Item.Properties, Item>() {
+			@Override
+			public Item apply(Item.Properties props) {
+				// 调用Python函数
+				PyObject result = pyCallable.__call__(org.python.core.Py.java2py(props));
+				return (Item) result.__tojava__(Item.class);
+			}
+		};
+
+		return register(name, ModName, itemFactory, settings);
+	}
+
 	public static <T extends Item> T register(String name, String ModName, Function<Item.Properties, T> itemFactory, Item.Properties settings) {
 		ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ModName, name));
+
+		// Check if item is already registered
+		if (BuiltInRegistries.ITEM.containsKey(itemKey)) {
+			// Item already exists, try to get it from registry
+			try {
+				var holder = BuiltInRegistries.ITEM.get(itemKey);
+				if (holder.isPresent()) {
+					return (T) holder.get().value();
+				}
+			} catch (Exception e) {
+				// Fall through to create new item
+			}
+		}
+
 		T item = itemFactory.apply(settings.setId(itemKey));
 		Registry.register(BuiltInRegistries.ITEM, itemKey, item);
 

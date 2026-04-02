@@ -47,7 +47,7 @@ public class JythonModClient implements ClientModInitializer {
 
 		LOGGER.info("Initializing Jython Mod Client...");
 
-		// Jython客户端初始化 - 执行 client.py
+		// Jython客户端初始化 - 不执行 main.py，只运行 client 模块
 		try {
 			// 创建 Python 解释器
 			PythonInterpreter interpreter = new PythonInterpreter();
@@ -61,6 +61,7 @@ public class JythonModClient implements ClientModInitializer {
 			if (pythonScript != null) {
 				LOGGER.info("Running main.py for client initialization");
 				interpreter.execfile(pythonScript);
+				pythonScript.close();
 
 				// 运行所有已加载的client模块
 				interpreter.exec(

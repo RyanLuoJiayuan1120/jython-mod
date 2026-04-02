@@ -57,6 +57,8 @@ class ModImporter:
         self.libs = {}
         self.libs_client = {}
         self.libs_server = {}
+        # 记录已执行main()的模块，避免重复执行
+        self.executed_mains = set()
 
     def import_(self, path):
         # 标准化路径，避免因路径格式不同导致的重复加载
@@ -68,68 +70,73 @@ class ModImporter:
             return
 
         LOGGER.info("Loading module from: " + str(path))
-        LOGGER.info("loaded:"+str(self.libs.keys()))
+        LOGGER.info("loaded:"+str([self.libs, self.libs_client, self.libs_server]))
         importer = zipimport.zipimporter(path)
         self.libs[normalized_path] = importer.load_module("main")
         try:
-            self.libs_client[normalized_path] = importer.load_module("client")
+            client_mod = importer.load_module("client")
+            if client_mod:
+                self.libs_client[normalized_path] = client_mod
             LOGGER.info("Loaded client module from: " + str(path))
         except Exception as e:
             LOGGER.debug("No client module in " + str(path) + ": " + str(e))
         try:
-            self.libs_server[normalized_path] = importer.load_module("server")
+            server_mod = importer.load_module("server")
+            self.libs_server[normalized_path] = server_mod
             LOGGER.info("Loaded server module from: " + str(path))
         except Exception as e:
             LOGGER.debug("No server module in " + str(path) + ": " + str(e))
 
 importer = ModImporter()
 
-for path in REMODPATH:
-    # 创建目录（如果不存在）
-    if not os.path.isdir(path):
-        try:
-            os.makedirs(path)
-            LOGGER.info("Created directory: " + path)
-        except Exception as e:
-            LOGGER.error("Error at mkdir:" + path + " - " + str(e))
-            continue  # 跳过无法创建的目录
-
-    LOGGER.info("Scanning path: " + path)
-
-    # 安全地遍历目录
-    try:
-        # 直接列出顶层目录的文件，避免子目录重复
-        file_list = os.listdir(path)
-        # 只处理.zip文件
-        zip_files = [f for f in file_list if f.endswith('.zip')]
-        if not zip_files:
-            LOGGER.info("No zip files found in: " + path)
-            continue
-
-        LOGGER.info("Found zip files: " + str(zip_files))
-
-        for i in zip_files:
+# 只在common环境下加载模块，client/server环境不需要重新加载
+if ENV_TYPE == "common":
+    for path in REMODPATH:
+        # 创建目录（如果不存在）
+        if not os.path.isdir(path):
             try:
-                # 确保文件名使用UTF-8编码
-                if isinstance(i, unicode):
-                    i_str = i.encode('utf-8')
-                else:
-                    i_str = str(i)
-                full_path = os.path.join(path, i_str)
-                LOGGER.info("Loading: " + full_path)
-                importer.import_(full_path)
+                os.makedirs(path)
+                LOGGER.info("Created directory: " + path)
             except Exception as e:
-                # 安全地输出错误信息，避免编码错误
-                try:
-                    LOGGER.error("Error loading " + str(i) + ": " + str(e))
-                except UnicodeEncodeError:
-                    LOGGER.error("Error loading file (encoding error in filename): " + repr(i))
-    except Exception as e:
-        LOGGER.error("Error scanning path " + path + ": " + str(e))
+                LOGGER.error("Error at mkdir:" + path + " - " + str(e))
+                continue  # 跳过无法创建的目录
 
-LOGGER.info("Loaded main modules: " + str(importer.libs.keys()))
-LOGGER.info("Loaded client modules: " + str(importer.libs_client.keys()))
-LOGGER.info("Loaded server modules: " + str(importer.libs_server.keys()))
+        LOGGER.info("Scanning path: " + path)
+
+        # 安全地遍历目录
+        try:
+            # 直接列出顶层目录的文件，避免子目录重复
+            file_list = os.listdir(path)
+            # 只处理.zip文件
+            zip_files = [f for f in file_list if f.endswith('.zip')]
+            if not zip_files:
+                LOGGER.info("No zip files found in: " + path)
+                continue
+
+            LOGGER.info("Found zip files: " + str(zip_files))
+
+            for i in zip_files:
+                try:
+                    # 确保文件名使用UTF-8编码
+                    if isinstance(i, unicode):
+                        i_str = i.encode('utf-8')
+                    else:
+                        i_str = str(i)
+                    full_path = os.path.join(path, i_str)
+                    LOGGER.info("Loading: " + full_path)
+                    importer.import_(full_path)
+                except Exception as e:
+                    # 安全地输出错误信息，避免编码错误
+                    try:
+                        LOGGER.error("Error loading " + str(i) + ": " + str(e))
+                    except UnicodeEncodeError:
+                        LOGGER.error("Error loading file (encoding error in filename): " + repr(i))
+        except Exception as e:
+            LOGGER.error("Error scanning path " + path + ": " + str(e))
+
+    LOGGER.info("Loaded main modules: " + str(importer.libs.keys()))
+    LOGGER.info("Loaded client modules: " + str(importer.libs_client.keys()))
+    LOGGER.info("Loaded server modules: " + str(importer.libs_server.keys()))
 
 # ======== res ========
 gamedir = GameDirHelper.getGameDirPath()
@@ -382,9 +389,24 @@ else:
     LOGGER.info("No data found in mods, skipping datapack creation")
 # Only run mod.main() in common environment (not in client/server)
 if ENV_TYPE == "common":
+    LOGGER.info("Preparing to execute main() for " + str(len(importer.libs)) + " modules")
     for mod_path, mod in importer.libs.items():
+        # 跳过已经执行过main()的模块
+        if mod_path in importer.executed_mains:
+            LOGGER.debug("Skipping already executed main() for: " + str(mod_path))
+            continue
+
         try:
             if hasattr(mod, 'main'):
+                LOGGER.info("Executing main() for: " + str(mod_path))
                 mod.main()
+                importer.executed_mains.add(mod_path)
+                LOGGER.info("Successfully executed main() for: " + str(mod_path))
         except Exception as e:
-            LOGGER.error("error at running main in " + str(mod_path) + ": " + str(e))
+            error_msg = str(e)
+            # 忽略重复注册错误
+            if "duplicate" in error_msg.lower() or "duplicate key" in error_msg.lower() or "Adding duplicate" in error_msg:
+                LOGGER.info("Skipping duplicate registration from: " + str(mod_path))
+                importer.executed_mains.add(mod_path)
+            else:
+                LOGGER.error("error at running main in " + str(mod_path) + ": " + str(e))

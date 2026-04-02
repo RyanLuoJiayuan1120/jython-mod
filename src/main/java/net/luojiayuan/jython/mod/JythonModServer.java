@@ -30,7 +30,7 @@ public class JythonModServer implements DedicatedServerModInitializer {
 
 		LOGGER.info("Initializing Jython Mod Server...");
 
-		// Jython服务器初始化 - 执行 server.py
+		// Jython服务器初始化 - 不执行 main.py，只运行 server 模块
 		try {
 			// 创建 Python 解释器
 			PythonInterpreter interpreter = new PythonInterpreter();
@@ -44,6 +44,7 @@ public class JythonModServer implements DedicatedServerModInitializer {
 			if (pythonScript != null) {
 				LOGGER.info("Running main.py for server initialization");
 				interpreter.execfile(pythonScript);
+				pythonScript.close();
 
 				// 运行所有已加载的server模块
 				interpreter.exec(
