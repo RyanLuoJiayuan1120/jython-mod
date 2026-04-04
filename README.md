@@ -289,3 +289,7 @@ cd jython-mod
 
 **注意**: 本项目仍在开发中，可能会有一些不完善的地方。欢迎提供反馈和建议！
 Discord: [https://discord.gg/FfkFkdhb](https://discord.gg/FfkFkdhb)
+
+# 介绍视频
+
+<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=116345966428405&bvid=BV1QkDTBeEJF&cid=37235656322&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
