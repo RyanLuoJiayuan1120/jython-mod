@@ -3,7 +3,10 @@
     "allow": [
       "Bash(./gradlew:*)",
       "Bash(jar:*)",
-      "Bash(gradlew.bat:*)"
+      "Bash(gradlew.bat:*)",
+      "Bash(ls:*)",
+      "Bash(python:*)",
+      "Bash(unzip:*)"
     ]
   }
 }

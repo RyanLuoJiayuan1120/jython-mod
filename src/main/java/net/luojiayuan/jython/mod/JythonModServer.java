@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.luojiayuan.jython.mod.config.ModConfig;
+import net.luojiayuan.jython.mod.loader.Loader;
 
 public class JythonModServer implements DedicatedServerModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("jython-mod-server");
@@ -32,45 +33,7 @@ public class JythonModServer implements DedicatedServerModInitializer {
 
 		// Jython服务器初始化 - 不执行 main.py，只运行 server 模块
 		try {
-			// 创建 Python 解释器
-			PythonInterpreter interpreter = new PythonInterpreter();
-
-			// 设置环境变量，让Python知道这是服务器端
-			interpreter.set("ENV_TYPE", "server");
-			interpreter.set("LOGGER", new PythonLogger(LOGGER));
-
-			// 从 resources 目录读取 main.py 文件
-			InputStream pythonScript = getClass().getResourceAsStream(Jythonmod.CONFIG.scriptPath);
-			if (pythonScript != null) {
-				LOGGER.info("Running main.py for server initialization");
-				interpreter.execfile(pythonScript);
-				pythonScript.close();
-
-				// 运行所有已加载的server模块
-				interpreter.exec(
-					"if 'importer' in globals():\n" +
-					"    LOGGER.info('Server modules loaded: ' + str(len(importer.libs_server)))\n" +
-					"    if importer.libs_server:\n" +
-					"        for mod in importer.libs_server:\n" +
-					"            if mod is not None:\n" +
-					"                try:\n" +
-					"                    if hasattr(mod, 'server'):\n" +
-					"                        mod.server()\n" +
-					"                except Exception as e:\n" +
-					"                    file_path = getattr(mod, '__file__', 'unknown')\n" +
-					"                    LOGGER.warning('error at running server module in ' + str(file_path) + ': ' + str(e))\n" +
-					"    else:\n" +
-					"        LOGGER.info('No server modules to run')\n" +
-					"else:\n" +
-					"    LOGGER.warning('importer not found in globals')"
-				);
-
-				LOGGER.info("Succeed in running server modules");
-				pythonScript.close();
-			} else {
-				LOGGER.error("Cannot find main.py for server initialization");
-			}
-			interpreter.close();
+			Loader loader =  new Loader("server");
 
 		} catch (Exception e) {
 			LOGGER.error("Runtime Error in running server modules: " + e.getMessage(), e);

@@ -43,3 +43,5 @@ custom/
 custom/output/directory/jython-mod-1.0.0-dev.jar
 
 1.ps1
+.claude/settings.local.json
+item_example.zip
