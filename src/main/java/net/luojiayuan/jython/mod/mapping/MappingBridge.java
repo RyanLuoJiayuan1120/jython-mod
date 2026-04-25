@@ -9,15 +9,18 @@ public class MappingBridge {
 
     private static final Map<String, String> CLASS_MAP = new HashMap<>();
     private static final Map<String, String> METHOD_MAP = new HashMap<>();
+    private static final Map<String, String> METHOD_MAP_REVERSE = new HashMap<>();
 
     public static void init() {
         MemoryMappingTree tree = MappingLoader.getTree();
+        if (tree == null) {
+            System.out.println("[MappingBridge] tree is null, mapping not loaded!");
+            return;
+        }
 
         System.out.println("[MappingBridge] 开始解析 mapping...");
 
-        // ✅ 用 tree.getClasses() 返回的 Iterable<Object>
         for (Object clsObj : tree.getClasses()) {
-
             String yarnClass = getString(clsObj, "getName", "named");
             String interClass = getString(clsObj, "getName", "intermediary");
 
@@ -27,12 +30,11 @@ public class MappingBridge {
 
             CLASS_MAP.put(yarnClass.replace('/', '.'), interClass.replace('/', '.'));
 
-            // ✅ 关键：用 tree 的公开方法获取方法
-            // 注意：这里不能用 getMethods()
-            // 但我们可以用 tree.getMethods(clsObj)
             Iterable<?> methods;
             try {
-                methods = (Iterable<?>) clsObj.getClass().getMethod("getMethods").invoke(clsObj);
+                java.lang.reflect.Method getMethods = clsObj.getClass().getDeclaredMethod("getMethods");
+                getMethods.setAccessible(true);
+                methods = (Iterable<?>) getMethods.invoke(clsObj);
             } catch (Exception e) {
                 System.out.println("[MappingBridge] getMethods 失败: " + e.getMessage());
                 continue;
@@ -51,12 +53,18 @@ public class MappingBridge {
                     continue;
                 }
 
-                String key = yarnClass.replace('/', '.') + "#" + yarnMethod + "(" + desc + ")";
+                String classKey = yarnClass.replace('/', '.');
+                String interClassKey = interClass.replace('/', '.');
+
+                String key = classKey + "#" + yarnMethod + desc;
                 METHOD_MAP.put(key, interMethod);
+
+                String reverseKey = interClassKey + "#" + interMethod + desc;
+                METHOD_MAP_REVERSE.put(reverseKey, yarnMethod);
             }
         }
 
-        System.out.println("[MappingBridge] 完成，共加载类: " + CLASS_MAP.size());
+        System.out.println("[MappingBridge] 完成，共加载类: " + CLASS_MAP.size() + ", 方法: " + METHOD_MAP.size());
     }
 
     private static String getString(Object obj, String methodName, String arg) {
@@ -74,6 +82,10 @@ public class MappingBridge {
     }
 
     public static String getObfMethod(String yarnClass, String yarnMethod, String desc) {
-        return METHOD_MAP.get(yarnClass + "#" + yarnMethod + "(" + desc + ")");
+        return METHOD_MAP.get(yarnClass + "#" + yarnMethod + desc);
+    }
+
+    public static String getNamedMethod(String interClass, String interMethod, String desc) {
+        return METHOD_MAP_REVERSE.get(interClass + "#" + interMethod + desc);
     }
 }
