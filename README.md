@@ -2,7 +2,7 @@
 
 [![Build and Release](https://github.com/RyanLuoJiayuan1120/jython-mod/actions/workflows/build.yml/badge.svg)](https://github.com/RyanLuoJiayuan1120/jython-mod/actions)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/FfkFkdhb)
-[![QQ](https://img.shields.io/badge/QQ-1094507536-blue)](https://wpa.qq.com/msgrd?v=3&uin=1094507536&site=qq&menu=yes)
+[![QQ群](https://img.shields.io/badge/QQ群-1094507536-blue)](https://qm.qq.com/q/1094507536)
 
 > ⚠️ **注意：Jython ≠ Python！** Jython 是 Python 2.7 的 Java 实现，语法与 Python 2.x 一致。
 
