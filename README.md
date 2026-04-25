@@ -73,4 +73,5 @@ cd jython-mod
 
 - [FabricMC](https://fabricmc.net/)
 - [源代码](https://github.com/RyanLuoJiayuan1120/jython-mod)
+- [Mc百科](https://www.mcmod.cn/class/25999.html)
 - Discord: [https://discord.gg/FfkFkdhb](https://discord.gg/FfkFkdhb)
