@@ -16,11 +16,10 @@ import org.python.core.PySystemState;
 import org.python.core.Py;
 import net.luojiayuan.jython.mod.utils.path;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
-// import net.luojiayuan.jython.mod.utils.GameDirHelperExample;
+import net.luojiayuan.jython.mod.mapping.*;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.luojiayuan.jython.mod.config.ModConfig;
@@ -37,7 +36,9 @@ public class Jythonmod implements ModInitializer {
 		// 初始化配置
 		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+		MappingLoader.Loader();
 
+		MappingBridge.init();
 		LOGGER.info(path_);
 		LOGGER.info("Hello Fabric world!");
 		if (CONFIG.debugMode) {

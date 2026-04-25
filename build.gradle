@@ -56,14 +56,15 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
+	
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// Jython - Python implementation for Java (打包进jar)
 	implementation "org.python:jython-standalone:${project.jython_version}"
 	includeImplementation "org.python:jython-standalone:${project.jython_version}"
-
+	implementation("net.fabricmc.fabric-loom-remap:net.fabricmc.fabric-loom-remap.gradle.plugin:1.14.7")
+	implementation "net.fabricmc:mapping-io:0.3.0"
 	// Cloth Config - Configuration library with GUI
 	modApi "me.shedaniel.cloth:cloth-config-fabric:21.11.153"
 
