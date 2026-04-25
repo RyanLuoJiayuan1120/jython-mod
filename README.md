@@ -273,7 +273,7 @@ cd jython-mod
 
 - [FabricMC](https://fabricmc.net/)
 - [源代码](https://github.com/RyanLuoJiayuan1120/jython-mod)
-- [Mc百科（待审核）](https://www.mcmod.cn/class/25999.html)
+- [Mc百科](https://www.mcmod.cn/class/25999.html)
 
 ## 贡献
 
@@ -289,3 +289,4 @@ cd jython-mod
 
 **注意**: 本项目仍在开发中，可能会有一些不完善的地方。欢迎提供反馈和建议！
 Discord: [https://discord.gg/FfkFkdhb](https://discord.gg/FfkFkdhb)
+QQ: 1094507536
