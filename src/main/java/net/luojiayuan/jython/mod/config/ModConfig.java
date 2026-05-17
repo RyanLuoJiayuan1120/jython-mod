@@ -18,11 +18,11 @@ public class ModConfig implements ConfigData {
 	public String scriptPath = "/assets/jython-mod/jython/main.py";
 
 	// 是否自动重载脚本
-	public boolean autoReload = true;
+	// public boolean autoReload = true;
 
 	// 脚本执行超时时间（秒）
-	@ConfigEntry.BoundedDiscrete(min = 1, max = 300)
-	public int scriptTimeout = 30;
+	// @ConfigEntry.BoundedDiscrete(min = 1, max = 300)
+	// public int scriptTimeout = 30;
 
 	// 是否在控制台显示Python输出
 	public boolean showPythonOutput = true;
@@ -30,9 +30,9 @@ public class ModConfig implements ConfigData {
 	// Python系统路径（可选，用逗号分隔）
 	public String pythonPath = "";
 
-	// 版本号（隐藏字段，不显示在GUI中）
-	// @ConfigEntry.Gui.Excluded
-	// public String version = "";
+	// Jython引擎版本（1:Jython或2:Graalpy）
+	public int engineVersion = 1;
+	
 	@ConfigEntry.Gui.RequiresRestart
 	public String modsPaths = "{gamedir}/jymods";
 }

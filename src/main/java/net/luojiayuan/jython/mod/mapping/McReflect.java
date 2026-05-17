@@ -84,7 +84,77 @@ public class McReflect {
         }
 
         matched.setAccessible(true);
-        return matched.invoke(instance, args);
+        
+        // 解包 GraalPy Value 对象
+        Object unpackedInstance = unpackPolyglotValue(instance, clazz);
+        Class<?>[] paramTypes = matched.getParameterTypes();
+        Object[] unpackedArgs = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            unpackedArgs[i] = unpackPolyglotValue(args[i], paramTypes[i]);
+        }
+        
+        // GraalPy 可能传入 Double 但方法需要 float，进行数值窄化转换
+        for (int i = 0; i < unpackedArgs.length; i++) {
+            if (unpackedArgs[i] instanceof Number) {
+                Number n = (Number) unpackedArgs[i];
+                if (paramTypes[i] == float.class) unpackedArgs[i] = n.floatValue();
+                else if (paramTypes[i] == double.class) unpackedArgs[i] = n.doubleValue();
+                else if (paramTypes[i] == int.class) unpackedArgs[i] = n.intValue();
+                else if (paramTypes[i] == long.class) unpackedArgs[i] = n.longValue();
+                else if (paramTypes[i] == short.class) unpackedArgs[i] = n.shortValue();
+                else if (paramTypes[i] == byte.class) unpackedArgs[i] = n.byteValue();
+            }
+        }
+        
+        return matched.invoke(unpackedInstance, unpackedArgs);
+    }
+    
+    private static Object unpackPolyglotValue(Object obj, Class<?> targetType) {
+        if (obj == null) return null;
+        Class<?> cls = obj.getClass();
+        String name = cls.getName();
+        if (name.contains("polyglot") || name.contains("truffle")) {
+            try {
+                // 1. 尝试 asHostObject（Java 对象代理）
+                try {
+                    Method asHost = cls.getMethod("asHostObject");
+                    Object host = asHost.invoke(obj);
+                    if (host != null) return host;
+                } catch (Exception ignored) {}
+                
+                // 2. 数值直接转换
+                if (targetType == float.class || targetType == Float.class) {
+                    return cls.getMethod("asFloat").invoke(obj);
+                }
+                if (targetType == double.class || targetType == Double.class) {
+                    return cls.getMethod("asDouble").invoke(obj);
+                }
+                if (targetType == int.class || targetType == Integer.class) {
+                    return cls.getMethod("asInt").invoke(obj);
+                }
+                if (targetType == long.class || targetType == Long.class) {
+                    return cls.getMethod("asLong").invoke(obj);
+                }
+                if (targetType == boolean.class || targetType == Boolean.class) {
+                    return cls.getMethod("asBoolean").invoke(obj);
+                }
+                
+                // 3. 通用 as 转换（包装类）
+                Class<?> boxed = targetType;
+                if (targetType == float.class) boxed = Float.class;
+                else if (targetType == double.class) boxed = Double.class;
+                else if (targetType == int.class) boxed = Integer.class;
+                else if (targetType == long.class) boxed = Long.class;
+                else if (targetType == boolean.class) boxed = Boolean.class;
+                else if (targetType == byte.class) boxed = Byte.class;
+                else if (targetType == short.class) boxed = Short.class;
+                else if (targetType == char.class) boxed = Character.class;
+                return cls.getMethod("as", Class.class).invoke(obj, boxed);
+            } catch (Exception e) {
+                // 解包失败，保持原样
+            }
+        }
+        return obj;
     }
 
     private static String getDescriptor(Class<?>[] params, Class<?> ret) {
@@ -123,6 +193,12 @@ public class McReflect {
     }
 
     private static boolean isAssignable(Class<?> param, Class<?> arg) {
+        // GraalPy 的 Value / Number 对象由 Polyglot 在调用时自动解包
+        String argName = arg.getName();
+        if (argName.contains("polyglot") || argName.contains("truffle")) return true;
+        if (Number.class.isAssignableFrom(arg)) {
+            if (param == float.class || param == double.class || param == int.class || param == long.class) return true;
+        }
         if (param.isPrimitive()) {
             if (param == boolean.class && arg == Boolean.class) return true;
             if (param == byte.class && arg == Byte.class) return true;

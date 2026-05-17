@@ -9,6 +9,9 @@ import net.luojiayuan.jython.mod.Jythonmod;
 import net.luojiayuan.jython.mod.PythonLogger;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
 import net.luojiayuan.jython.mod.builder.*;
+import net.luojiayuan.jython.mod.engine.jython.JyRunner;
+import net.luojiayuan.jython.mod.engine.graalpy.GpRunner;
+import net.luojiayuan.jython.mod.engine.RunnerMain;
 public class Loader {
     public Vector<File> dirs = new Vector<File>();
     public Vector<String> JythonMods = new Vector<String>();
@@ -65,22 +68,24 @@ public class Loader {
         for (String Mod : JythonMods) {
             try {
                 Jythonmod.LOGGER.info("Run mod \""+Mod+"\"");
-                String path_ = GameDirHelper.getGameDirPath();
-                PythonInterpreter interpreter = new PythonInterpreter();
-                interpreter.set("LOGGER", new PythonLogger(Jythonmod.LOGGER));
-                interpreter.set("ENV_TYPE", env_type);
-                interpreter.set("GAME_DIR", path_);
-                interpreter.set("Script", Mod);
+                RunnerMain runner = null;
+                if (Jythonmod.CONFIG.engineVersion == 1) {
+                    runner = new JyRunner(env_type, Mod);
+                    
+                } else if (Jythonmod.CONFIG.engineVersion == 2) {
+                    runner = new GpRunner(env_type, Mod);
+                }
+
                 InputStream pythonScript = getClass().getResourceAsStream("/assets/jython-mod/jython/zipimporter.py");
-                interpreter.execfile(pythonScript);
-                pythonScript.close();
-                interpreter.exec("importer = ModImporter(ENV_TYPE, Script) \n"+
-                                 "importer.Load()"
-                                );
-                interpreter.close();
+                runner.runScript(pythonScript);
+                runner.exec("importer = ModImporter(ENV_TYPE, Script) \n"+
+                            "importer.Load()"
+                );
+                runner.close();
                 Jythonmod.LOGGER.info("Succeed in running mod \""+Mod+"\"");
             } catch (Exception e) {
                 Jythonmod.LOGGER.error("Error at running mod \""+Mod+"\":"+e.toString());
+                e.printStackTrace();
             }
         }
         

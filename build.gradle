@@ -1,6 +1,7 @@
 plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 	id 'maven-publish'
+	id "org.graalvm.python" version "24.2.0"
 }
 
 version = project.mod_version
@@ -67,7 +68,8 @@ dependencies {
 	implementation "net.fabricmc:mapping-io:0.3.0"
 	// Cloth Config - Configuration library with GUI
 	modApi "me.shedaniel.cloth:cloth-config-fabric:21.11.153"
-
+    implementation("org.graalvm.polyglot:polyglot:24.2.0")
+    implementation("org.graalvm.polyglot:python:24.2.0")
 	// Mod Menu - For in-game mod configuration UI
 	// modImplementation "com.terraformersmc:modmenu:17.0.0-beta.2"
 
@@ -126,6 +128,13 @@ afterEvaluate {
 }
 
 // configure the maven publication
+// 排除 POM 文件避免 Fabric Loader 扫描时报 zip 错误
+tasks.withType(JavaExec).configureEach {
+    if (name == 'runClient' || name == 'runServer') {
+        classpath = classpath.filter { !it.name.endsWith('.pom') }
+    }
+}
+
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
@@ -142,3 +151,4 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+

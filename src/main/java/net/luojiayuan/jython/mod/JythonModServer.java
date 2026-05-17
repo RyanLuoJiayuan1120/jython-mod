@@ -1,9 +1,6 @@
 package net.luojiayuan.jython.mod;
 
-import java.io.InputStream;
-
 import net.fabricmc.api.DedicatedServerModInitializer;
-import org.python.util.PythonInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

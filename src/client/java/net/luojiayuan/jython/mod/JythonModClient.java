@@ -1,19 +1,8 @@
 package net.luojiayuan.jython.mod;
 
-import java.io.InputStream;
-
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.loader.api.FabricLoader;
 import net.luojiayuan.jython.mod.config.ModConfig;
 import net.luojiayuan.jython.mod.loader.Loader;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.platform.InputConstants;
-import org.lwjgl.glfw.GLFW;
-import org.python.util.PythonInterpreter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
