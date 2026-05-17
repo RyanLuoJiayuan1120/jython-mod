@@ -23,7 +23,7 @@ public class McReflect {
             className = MappingBridge.getObfClass(yarnClass);
         }
 
-        System.out.println("DEBUG: yarn=" + yarnClass + " -> className=" + className);
+        // System.out.println("DEBUG: yarn=" + yarnClass + " -> className=" + className);
         if (className == null) {
             throw new RuntimeException("找不到映射: " + yarnClass);
         }
@@ -44,7 +44,23 @@ public class McReflect {
                 throw new RuntimeException("找不到构造函数：" + yarnClass);
             }
             matched.setAccessible(true);
-            return matched.newInstance(args);
+            Class<?>[] paramTypes = matched.getParameterTypes();
+            Object[] unpackedArgs = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                unpackedArgs[i] = unpackPolyglotValue(args[i], paramTypes[i]);
+            }
+            for (int i = 0; i < unpackedArgs.length; i++) {
+                if (unpackedArgs[i] instanceof Number) {
+                    Number n = (Number) unpackedArgs[i];
+                    if (paramTypes[i] == float.class) unpackedArgs[i] = n.floatValue();
+                    else if (paramTypes[i] == double.class) unpackedArgs[i] = n.doubleValue();
+                    else if (paramTypes[i] == int.class) unpackedArgs[i] = n.intValue();
+                    else if (paramTypes[i] == long.class) unpackedArgs[i] = n.longValue();
+                    else if (paramTypes[i] == short.class) unpackedArgs[i] = n.shortValue();
+                    else if (paramTypes[i] == byte.class) unpackedArgs[i] = n.byteValue();
+                }
+            }
+            return matched.newInstance(unpackedArgs);
         }
 
         // 尝试字段访问（静态字段，无参数）
@@ -106,7 +122,23 @@ public class McReflect {
             }
         }
         
-        return matched.invoke(unpackedInstance, unpackedArgs);
+        try {
+            return matched.invoke(unpackedInstance, unpackedArgs);
+        } catch (Exception e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("invoke failed: ").append(clazz.getName()).append(".").append(matched.getName()).append("(");
+            for (int i = 0; i < paramTypes.length; i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(paramTypes[i].getSimpleName());
+            }
+            sb.append(") with args [");
+            for (int i = 0; i < unpackedArgs.length; i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(unpackedArgs[i] == null ? "null" : unpackedArgs[i].getClass().getName());
+            }
+            sb.append("]");
+            throw new RuntimeException(sb.toString(), e);
+        }
     }
     
     private static Object unpackPolyglotValue(Object obj, Class<?> targetType) {

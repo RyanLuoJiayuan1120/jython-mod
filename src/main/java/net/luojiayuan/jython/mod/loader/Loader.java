@@ -84,8 +84,7 @@ public class Loader {
                 runner.close();
                 Jythonmod.LOGGER.info("Succeed in running mod \""+Mod+"\"");
             } catch (Exception e) {
-                Jythonmod.LOGGER.error("Error at running mod \""+Mod+"\":"+e.toString());
-                e.printStackTrace();
+                Jythonmod.LOGGER.error("Error at running mod \""+Mod+"\":"+e.toString(), e);
             }
         }
         
