@@ -26,23 +26,20 @@ public class Loader {
     }
 
     private void Scanner(){
-        /*
-         * 模组加载文件夹列表的扫描 
-        */
         String modsPath = Jythonmod.CONFIG.modsPaths;
         String gameDir = GameDirHelper.getGameDirPath();
         String resolvedPath = modsPath.replace("{gamedir}", gameDir);
-        String[] resolvedPaths = resolvedPath.split(";");// 注意这里记得，路径里面不要有;
+        String[] resolvedPaths = resolvedPath.split(";"); // NOTE: paths must not contain semicolons
         
         for (String path : resolvedPaths){
             File folder = new File(path);
             if (folder.exists()) {
-                Jythonmod.LOGGER.debug("Make dir:"+path);
+                Jythonmod.LOGGER.debug("Creating dir: {}", path);
                 try {
                     folder.mkdir();
-                    Jythonmod.LOGGER.debug("Succeed in Making dir:"+path);
+                    Jythonmod.LOGGER.debug("Created dir: {}", path);
                 } catch (Exception e){
-                    Jythonmod.LOGGER.error("Error at making dir \""+path+"\":"+e.toString());
+                    Jythonmod.LOGGER.error("Failed to create dir \"{}\": {}", path, e.toString());
                 }
             }
             dirs.add(new File(path));
@@ -57,17 +54,17 @@ public class Loader {
                     try {
                         JythonMods.add(file.getAbsolutePath());
                     } catch (Exception e){
-                        Jythonmod.LOGGER.error("Error at listing dir \""+folder.toString()+"\":"+e.toString());
+                        Jythonmod.LOGGER.error("Failed to list dir \"{}\": {}", folder, e.toString());
                     }
                 }
             } catch (Exception e) {
-                Jythonmod.LOGGER.error("Error at getting dir list:"+e.toString());
+                Jythonmod.LOGGER.error("Failed to get dir list: {}", e.toString());
             }
             
         }
         for (String Mod : JythonMods) {
             try {
-                Jythonmod.LOGGER.info("Run mod \""+Mod+"\"");
+                Jythonmod.LOGGER.info("Running mod \"{}\"", Mod);
                 RunnerMain runner = null;
                 if (Jythonmod.CONFIG.engineVersion == 1) {
                     runner = new JyRunner(env_type, Mod);
@@ -82,9 +79,9 @@ public class Loader {
                             "importer.Load()"
                 );
                 runner.close();
-                Jythonmod.LOGGER.info("Succeed in running mod \""+Mod+"\"");
+                Jythonmod.LOGGER.info("Successfully ran mod \"{}\"", Mod);
             } catch (Exception e) {
-                Jythonmod.LOGGER.error("Error at running mod \""+Mod+"\":"+e.toString(), e);
+                Jythonmod.LOGGER.error("Failed to run mod \"{}\": {}", Mod, e.toString(), e);
             }
         }
         

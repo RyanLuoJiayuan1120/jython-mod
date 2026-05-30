@@ -12,11 +12,11 @@ public class GpIniter {
         String pythonHome = "/";
         System.setProperty("python.home", pythonHome);
         System.setProperty("python.path", "/Lib");
-        Jythonmod.LOGGER.info("Set python.home=" + pythonHome);
-        Jythonmod.LOGGER.info("Set python.path=/Lib");
+        Jythonmod.LOGGER.debug("Set python.home={}", pythonHome);
+        Jythonmod.LOGGER.debug("Set python.path=/Lib");
         
         if (Jythonmod.CONFIG.debugMode) {
-            Jythonmod.LOGGER.info("GraalPy environment initialized.");
+            Jythonmod.LOGGER.debug("GraalPy environment initialized.");
         }
     }
 }

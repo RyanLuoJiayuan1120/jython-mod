@@ -7,6 +7,8 @@ package net.luojiayuan.jython.mod.builder;
 
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
 import net.luojiayuan.jython.mod.utils.ResourcePackHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ModResourcePackBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger("jython-mod");
 
     private static final String[] RESOURCE_FOLDERS = {
             "assets", "atlases", "blockstates", "equipment", "font",
@@ -29,7 +32,7 @@ public class ModResourcePackBuilder {
 
     public static void build(String envType, String[] modPaths) {
         if (!"server".equals(envType)) {
-            // 服务器环境不需要生成资源包
+            // Server environment does not need resource pack generation
             return;
         }
 
@@ -70,12 +73,12 @@ public class ModResourcePackBuilder {
                     }
 
                     if (extracted) {
-                        System.out.println("Extracted resources from: " + file.getName());
+                        LOGGER.debug("Extracted resources from: {}", file.getName());
                         resourcesCollected = true;
                     }
 
                 } catch (Exception e) {
-                    System.err.println("Failed to extract resources from " + file.getName() + ": " + e.getMessage());
+                    LOGGER.error("Failed to extract resources from {}: {}", file.getName(), e.getMessage());
                 }
             }
         }
@@ -84,13 +87,13 @@ public class ModResourcePackBuilder {
             try {
                 writePackMeta(tempResDir, "Jython Mod Resources - Generated from mod resources");
             } catch (IOException e) {
-                System.err.println("Failed to write pack.mcmeta: " + e.getMessage());
+                LOGGER.error("Failed to write pack.mcmeta: {}", e.getMessage());
             }
             createZip(tempResDir, finalResPack);
             ResourcePackHelper.enableResourcePack("JythonModAssets.zip");
-            System.out.println("Resource pack created successfully!");
+            LOGGER.info("Resource pack created successfully");
         } else {
-            System.out.println("No resources found, skipping resource pack creation");
+            LOGGER.debug("No resources found, skipping resource pack creation");
         }
 
         deleteDirectory(tempDir);

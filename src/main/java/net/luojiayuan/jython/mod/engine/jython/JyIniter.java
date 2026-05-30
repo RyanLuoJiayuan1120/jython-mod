@@ -12,8 +12,8 @@ public class JyIniter {
 		String pythonHome = "/";
 		System.setProperty("python.home", pythonHome);
 		System.setProperty("python.path", "/Lib");
-		Jythonmod.LOGGER.info("Set python.home=" + pythonHome);
-		Jythonmod.LOGGER.info("Set python.path=/Lib");
+		Jythonmod.LOGGER.debug("Set python.home={}", pythonHome);
+		Jythonmod.LOGGER.debug("Set python.path=/Lib");
 		PySystemState.initialize();
 			
 		sys.path.append(Py.newString("Lib"));

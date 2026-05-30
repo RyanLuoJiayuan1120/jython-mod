@@ -7,6 +7,8 @@ package net.luojiayuan.jython.mod.builder;
 
 import net.luojiayuan.jython.mod.utils.DatapackHelper;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ModDataPackBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger("jython-mod");
 
     public static void build(String[] modPaths) {
         String gameDir = GameDirHelper.getGameDirPath();
@@ -56,26 +59,26 @@ public class ModDataPackBuilder {
                     }
 
                     if (extracted) {
-                        System.out.println("Extracted data from: " + file.getName());
+                        LOGGER.debug("Extracted data from: {}", file.getName());
                         dataCollected = true;
                     }
 
                 } catch (Exception e) {
-                    System.err.println("Failed to extract data from " + file.getName() + ": " + e.getMessage());
+                    LOGGER.error("Failed to extract data from {}: {}", file.getName(), e.getMessage());
                 }
             }
         }
 
         if (!dataCollected) {
             deleteDirectory(tempDir);
-            System.out.println("No data found, skipping datapack creation");
+            LOGGER.debug("No data found, skipping datapack creation");
             return;
         }
 
         try {
             writePackMeta(tempDataDir, "Jython Mod Data - Generated from mod data");
         } catch (IOException e) {
-            System.err.println("Failed to write datapack pack.mcmeta: " + e.getMessage());
+            LOGGER.error("Failed to write datapack pack.mcmeta: {}", e.getMessage());
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
@@ -95,15 +98,15 @@ public class ModDataPackBuilder {
             try (FileOutputStream fos = new FileOutputStream(datapack)) {
                 fos.write(baos.toByteArray());
                 copied++;
-                System.out.println("Copied datapack to: " + world.getName());
+                LOGGER.debug("Copied datapack to: {}", world.getName());
             } catch (IOException e) {
-                System.err.println("Failed to copy datapack to " + world.getName());
+                LOGGER.error("Failed to copy datapack to {}", world.getName());
             }
         }
 
         if (copied > 0) {
             DatapackHelper.enableDatapack("JythonModData.zip");
-            System.out.println("Datapack created and copied to " + copied + " save(s)");
+            LOGGER.info("Datapack created and copied to {} save(s)", copied);
         }
 
         deleteDirectory(tempDir);

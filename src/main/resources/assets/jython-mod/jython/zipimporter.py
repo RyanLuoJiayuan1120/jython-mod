@@ -2,16 +2,17 @@
 import zipimport
 import sys
 
-# ========== McReflect Import Hook（Jython & GraalPy 通用）==========
-# 通过 import 钩子拦截 Minecraft 相关包的导入，利用 McReflect 的 yarn->obf
-# 映射自动解析类名，使得在 Python 中可直接写：
+# ========== McReflect Import Hook (Jython & GraalPy) ==========
+# Intercepts Minecraft-related package imports via sys.meta_path hooks,
+# using McReflect's yarn->obf mapping to resolve class names automatically.
+# This allows Python code like:
 #   from net.minecraft.world.item import Item
-# 即使在生产环境（类名被混淆）也能正常工作。
+# to work even in production (obfuscated) environments.
 
 import types
 
 class McReflectPackage(types.ModuleType):
-    """通过 McReflect 映射 Minecraft 类名的代理包"""
+    """Proxy package that maps Minecraft class names via McReflect"""
     def __getattr__(self, name):
         if name == '__path__':
             return []
@@ -24,7 +25,7 @@ class McReflectPackage(types.ModuleType):
             setattr(self, name, cls)
             return cls
         except Exception:
-            # 不是类，创建子包
+            # Not a class, create sub-package
             sub = McReflectPackage(full_name)
             setattr(self, name, sub)
             sys.modules[full_name] = sub
@@ -46,7 +47,7 @@ class McReflectFinder:
         sys.modules[fullname] = pkg
         return pkg
 
-# 避免重复注册
+# Avoid duplicate registration
 if not any(type(f).__name__ == 'McReflectFinder' for f in sys.meta_path):
     sys.meta_path.insert(0, McReflectFinder())
     try:
@@ -56,13 +57,13 @@ if not any(type(f).__name__ == 'McReflectFinder' for f in sys.meta_path):
 
 # ============================================
 
-# ========== GraalPy Java 互操作兼容层 ==========
+# ========== GraalPy Java Interop Compatibility Layer ==========
 try:
     import java
     import types
 
     class JavaPackage(types.ModuleType):
-        """模拟 Jython 的 Java 包，支持 from x.y import Zzz 语法"""
+        """Simulates Jython's Java package, supporting from x.y import Zzz syntax"""
         def __getattr__(self, name):
             if name == '__path__':
                 return []
@@ -79,7 +80,7 @@ try:
                 setattr(self, name, cls)
                 return cls
             except Exception:
-                # 不是类，创建子包
+                # Not a class, create sub-package
                 sub = JavaPackage(full_name)
                 setattr(self, name, sub)
                 sys.modules[full_name] = sub
@@ -100,21 +101,21 @@ try:
             sys.modules[fullname] = pkg
             return pkg
 
-    # 避免重复注册
+    # Avoid duplicate registration
     if not any(type(f).__name__ == 'JythonCompatFinder' for f in sys.meta_path):
         sys.meta_path.insert(0, JythonCompatFinder())
 except ImportError:
-    pass  # Jython 环境不需要兼容层
+    pass  # Jython environment does not need compatibility layer
 # ============================================
 
-# 兼容 Jython 和 GraalPy
+# Jython and GraalPy compatibility
 try:
     from net.luojiayuan.jython.mod import Jythonmod
     from org.python.core import codecs
     codecs.setDefaultEncoding('utf-8')
     LOGGER = Jythonmod.LOGGER
 except ImportError:
-    # GraalPy 环境: LOGGER 由 Java bindings 注入
+    # GraalPy environment: LOGGER injected via Java bindings
     pass
 
 class ModImporter:
@@ -128,6 +129,6 @@ class ModImporter:
             Mod = importer.load_module(self.env)
             Mod.main()
         except zipimport.ZipImportError as e:
-            LOGGER.warn("Skip...Is \"" + self.path + "\" a folder?" + str(e))
+            LOGGER.warn('Skip...Is "{}" a folder? {}', self.path, str(e))
         except AttributeError as e:
-            LOGGER.warn("Skip...The Mod \"" + self.path + "\" don't have method " + self.env)
+            LOGGER.warn('Skip...The mod "{}" does not have method "{}"', self.path, self.env)

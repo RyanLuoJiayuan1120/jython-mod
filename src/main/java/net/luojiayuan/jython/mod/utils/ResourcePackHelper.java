@@ -14,8 +14,8 @@ public class ResourcePackHelper {
 	private static final Logger LOGGER = LoggerFactory.getLogger("jython-mod");
 
 	/**
-	 * 自动启用指定的资源包
-	 * @param packName 资源包文件名（例如：JythonModAssets.zip）
+	 * Automatically enable the specified resource pack
+	 * @param packName resource pack filename (e.g., JythonModAssets.zip)
 	 */
 	public static void enableResourcePack(String packName) {
 		Path optionsPath = GameDirHelper.getGameDir().resolve("options.txt");
@@ -69,7 +69,7 @@ public class ResourcePackHelper {
 				}
 			}
 		} catch (Exception e) {
-			LOGGER.warn("Failed to auto-enable resource pack: " + e.getMessage());
+			LOGGER.warn("Failed to auto-enable resource pack: {}", e.getMessage());
 		}
 	}
 }

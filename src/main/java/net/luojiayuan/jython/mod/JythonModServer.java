@@ -14,13 +14,13 @@ public class JythonModServer implements DedicatedServerModInitializer {
 
 	@Override
 	public void onInitializeServer() {
-		// 确保配置已初始化
+		// Ensure config is initialized
 		if (Jythonmod.CONFIG == null) {
 			AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 			Jythonmod.CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 		}
 
-		// 如果模组被禁用，则不继续初始化
+		// Skip initialization if mod is disabled
 		if (!Jythonmod.CONFIG.enabled) {
 			LOGGER.info("Jython Mod Server is disabled in config.");
 			return;
@@ -28,12 +28,12 @@ public class JythonModServer implements DedicatedServerModInitializer {
 
 		LOGGER.info("Initializing Jython Mod Server...");
 
-		// Jython服务器初始化 - 不执行 main.py，只运行 server 模块
+		// Jython server initialization - runs server modules only
 		try {
 			Loader loader =  new Loader("server");
 
 		} catch (Exception e) {
-			LOGGER.error("Runtime Error in running server modules: " + e.getMessage(), e);
+			LOGGER.error("Runtime error in server loader: {}", e.getMessage(), e);
 		}
 	}
 }

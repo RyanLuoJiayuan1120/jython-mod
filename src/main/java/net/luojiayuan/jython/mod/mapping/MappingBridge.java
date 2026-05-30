@@ -1,6 +1,7 @@
 package net.luojiayuan.jython.mod.mapping;
 
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
+import net.luojiayuan.jython.mod.Jythonmod;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,11 +15,11 @@ public class MappingBridge {
     public static void init() {
         MemoryMappingTree tree = MappingLoader.getTree();
         if (tree == null) {
-            System.out.println("[MappingBridge] tree is null, mapping not loaded!");
+            Jythonmod.LOGGER.warn("[MappingBridge] Mapping tree is null, mappings not loaded!");
             return;
         }
 
-        System.out.println("[MappingBridge] 开始解析 mapping...");
+        Jythonmod.LOGGER.debug("[MappingBridge] Parsing mappings...");
 
         for (Object clsObj : tree.getClasses()) {
             String yarnClass = getString(clsObj, "getName", "named");
@@ -36,7 +37,7 @@ public class MappingBridge {
                 getMethods.setAccessible(true);
                 methods = (Iterable<?>) getMethods.invoke(clsObj);
             } catch (Exception e) {
-                System.out.println("[MappingBridge] getMethods 失败: " + e.getMessage());
+                Jythonmod.LOGGER.debug("[MappingBridge] getMethods failed: {}", e.getMessage());
                 continue;
             }
 
@@ -64,7 +65,7 @@ public class MappingBridge {
             }
         }
 
-        System.out.println("[MappingBridge] 完成，共加载类: " + CLASS_MAP.size() + ", 方法: " + METHOD_MAP.size());
+        Jythonmod.LOGGER.debug("[MappingBridge] Loaded {} classes, {} methods", CLASS_MAP.size(), METHOD_MAP.size());
     }
 
     private static String getString(Object obj, String methodName, String arg) {

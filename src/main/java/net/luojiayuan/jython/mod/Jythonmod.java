@@ -20,7 +20,7 @@ public class Jythonmod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		// 初始化配置
+		// Initialize config
 		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 		MappingLoader.Loader();
@@ -30,13 +30,13 @@ public class Jythonmod implements ModInitializer {
 			GpIniter initer = new GpIniter();
 		}
 		MappingBridge.init();
-		LOGGER.info(path_);
-		LOGGER.info("Hello Fabric world!");
+		LOGGER.debug("Script path: {}", path_);
+		LOGGER.info("Jython Mod initialized");
 		if (CONFIG.debugMode) {
-			LOGGER.info("Jython Mod Configuration:");
-			LOGGER.info("  Enabled: " + CONFIG.enabled);
-			LOGGER.info("  Debug Mode: " + CONFIG.debugMode);
-			LOGGER.info("  Script Path: " + CONFIG.scriptPath);
+			LOGGER.debug("Jython Mod Configuration:");
+			LOGGER.debug("  Enabled: {}", CONFIG.enabled);
+			LOGGER.debug("  Debug Mode: {}", CONFIG.debugMode);
+			LOGGER.debug("  Script Path: {}", CONFIG.scriptPath);
 		}
 		if (!CONFIG.enabled) {
 			LOGGER.info("Jython Mod is disabled in config.");
@@ -47,7 +47,7 @@ public class Jythonmod implements ModInitializer {
 			Loader loader =  new Loader("main");
 
 		} catch (Exception e) {
-			LOGGER.error("Runtime Error in running: " + e.getMessage(), e);
+			LOGGER.error("Runtime error in main loader: {}", e.getMessage(), e);
 		}
 	}
 }

@@ -18,13 +18,13 @@ public class MappingLoader {
         tree = new MemoryMappingTree();
         try {
             Path mappingPath = FabricLoader.getInstance()
-                .getModContainer("jython-mod") // ← 你的 modid
+                .getModContainer("jython-mod")
                 .orElseThrow()
-                .getPath("mappings.tiny");    // ✅ 不要引号
-            System.out.println(mappingPath.toString());
+                .getPath("mappings.tiny");
+            Jythonmod.LOGGER.debug("Loading mappings from: {}", mappingPath);
             MappingReader.read(mappingPath, tree);
         } catch (IOException e) {
-            Jythonmod.LOGGER.error("Error at loading mapping: "+e.toString());
+            Jythonmod.LOGGER.error("Error loading mappings: {}", e.toString());
         }
     }
 

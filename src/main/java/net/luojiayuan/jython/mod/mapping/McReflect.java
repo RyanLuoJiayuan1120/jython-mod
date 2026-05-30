@@ -8,8 +8,8 @@ import net.fabricmc.loader.api.FabricLoader;
 public class McReflect {
 
     /**
-     * 通过 yarn 类名获取对应的 obf 类名字符串（自动处理混淆映射）。
-     * 供 GraalPy 使用：GraalPy 的 java.type() 需要字符串类名。
+     * Returns the obfuscated class name for a given Yarn class name.
+     * Used by GraalPy: java.type() requires a string class name.
      */
     public static String getClassName(String yarnClass) throws Exception {
         boolean devEnv = FabricLoader.getInstance().isDevelopmentEnvironment();
@@ -20,14 +20,14 @@ public class McReflect {
             className = MappingBridge.getObfClass(yarnClass);
         }
         if (className == null) {
-            throw new RuntimeException("找不到映射: " + yarnClass);
+            throw new RuntimeException("Mapping not found: " + yarnClass);
         }
         return className;
     }
 
     /**
-     * 通过 yarn 类名获取对应的 Java Class 对象（自动处理混淆映射）。
-     * 供 Jython import 钩子使用，Jython 可以直接使用 Class 对象。
+     * Returns the Java Class object for a given Yarn class name.
+     * Used by Jython import hooks.
      */
     public static Class<?> getClass(String yarnClass) throws Exception {
         return Class.forName(getClassName(yarnClass));
@@ -49,25 +49,25 @@ public class McReflect {
             className = MappingBridge.getObfClass(yarnClass);
         }
 
-        // System.out.println("DEBUG: yarn=" + yarnClass + " -> className=" + className);
+
         if (className == null) {
             throw new RuntimeException("找不到映射: " + yarnClass);
         }
         Class<?> clazz = Class.forName(className);
 
-        // 处理构造函数
+        // Handle constructors
         if ("<init>".equals(yarnMethod)) {
             Constructor<?> matched = null;
             for (Constructor<?> c : clazz.getConstructors()) {
                 if (isArgsMatch(c.getParameterTypes(), args)) {
                     if (matched != null) {
-                        throw new RuntimeException("构造函数重载冲突：" + yarnClass);
+                        throw new RuntimeException("Constructor overload conflict: " + yarnClass);
                     }
                     matched = c;
                 }
             }
             if (matched == null) {
-                throw new RuntimeException("找不到构造函数：" + yarnClass);
+                throw new RuntimeException("Constructor not found: " + yarnClass);
             }
             matched.setAccessible(true);
             Class<?>[] paramTypes = matched.getParameterTypes();
@@ -89,13 +89,13 @@ public class McReflect {
             return matched.newInstance(unpackedArgs);
         }
 
-        // 尝试字段访问（静态字段，无参数）
+        // Try field access (static fields, no args)
         if (instance == null && (args == null || args.length == 0)) {
             try {
                 Field field = clazz.getField(yarnMethod);
                 return field.get(null);
             } catch (NoSuchFieldException e) {
-                // 不是字段，继续找方法
+                // Not a field, continue to look for methods
             }
         }
 
@@ -114,7 +114,7 @@ public class McReflect {
             if (methodName != null && m.getName().equals(methodName)) {
                 if (isArgsMatch(m.getParameterTypes(), args)) {
                     if (matched != null) {
-                        throw new RuntimeException("方法重载冲突：" + yarnMethod);
+                        throw new RuntimeException("Method overload conflict: " + yarnMethod);
                     }
                     matched = m;
                 }
@@ -122,12 +122,12 @@ public class McReflect {
         }
 
         if (matched == null) {
-            throw new RuntimeException("找不到方法：" + yarnMethod);
+            throw new RuntimeException("Method not found: " + yarnMethod);
         }
 
         matched.setAccessible(true);
         
-        // 解包 GraalPy Value 对象
+        // Unpack GraalPy Value objects
         Object unpackedInstance = unpackPolyglotValue(instance, clazz);
         Class<?>[] paramTypes = matched.getParameterTypes();
         Object[] unpackedArgs = new Object[args.length];
@@ -135,7 +135,7 @@ public class McReflect {
             unpackedArgs[i] = unpackPolyglotValue(args[i], paramTypes[i]);
         }
         
-        // GraalPy 可能传入 Double 但方法需要 float，进行数值窄化转换
+        // GraalPy may pass Double but method expects float; perform numeric narrowing
         for (int i = 0; i < unpackedArgs.length; i++) {
             if (unpackedArgs[i] instanceof Number) {
                 Number n = (Number) unpackedArgs[i];
@@ -173,14 +173,14 @@ public class McReflect {
         String name = cls.getName();
         if (name.contains("polyglot") || name.contains("truffle")) {
             try {
-                // 1. 尝试 asHostObject（Java 对象代理）
+                // 1. Try asHostObject (Java object proxy)
                 try {
                     Method asHost = cls.getMethod("asHostObject");
                     Object host = asHost.invoke(obj);
                     if (host != null) return host;
                 } catch (Exception ignored) {}
                 
-                // 2. 数值直接转换
+                // 2. Direct numeric conversion
                 if (targetType == float.class || targetType == Float.class) {
                     return cls.getMethod("asFloat").invoke(obj);
                 }
@@ -197,7 +197,7 @@ public class McReflect {
                     return cls.getMethod("asBoolean").invoke(obj);
                 }
                 
-                // 3. 通用 as 转换（包装类）
+                // 3. Generic as conversion (boxed types)
                 Class<?> boxed = targetType;
                 if (targetType == float.class) boxed = Float.class;
                 else if (targetType == double.class) boxed = Double.class;
@@ -209,7 +209,7 @@ public class McReflect {
                 else if (targetType == char.class) boxed = Character.class;
                 return cls.getMethod("as", Class.class).invoke(obj, boxed);
             } catch (Exception e) {
-                // 解包失败，保持原样
+                // Unpack failed, keep original
             }
         }
         return obj;
@@ -251,7 +251,7 @@ public class McReflect {
     }
 
     private static boolean isAssignable(Class<?> param, Class<?> arg) {
-        // GraalPy 的 Value / Number 对象由 Polyglot 在调用时自动解包
+        // GraalPy Value / Number objects are auto-unpacked by Polyglot at invocation
         String argName = arg.getName();
         if (argName.contains("polyglot") || argName.contains("truffle")) return true;
         if (Number.class.isAssignableFrom(arg)) {

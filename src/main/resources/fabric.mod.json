@@ -15,6 +15,9 @@
 	"icon": "assets/jython-mod/icon.png",
 	"environment": "*",
 	"entrypoints": {
+		"preLaunch": [
+			"net.luojiayuan.jython.mod.bytecode.BytecodeHook"
+		],
 		"main": [
 			"net.luojiayuan.jython.mod.Jythonmod"
 		],

@@ -23,13 +23,13 @@ public class JythonModClient implements ClientModInitializer {
 	// );
 	@Override
 	public void onInitializeClient() {
-		// 确保配置已初始化
+		// Ensure config is initialized
 		if (Jythonmod.CONFIG == null) {
 			AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 			Jythonmod.CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 		}
 
-		// 如果模组被禁用，则不继续初始化
+		// Skip initialization if mod is disabled
 		if (!Jythonmod.CONFIG.enabled) {
 			LOGGER.info("Jython Mod Client is disabled in config.");
 			return;
@@ -39,7 +39,7 @@ public class JythonModClient implements ClientModInitializer {
 		try {
 			Loader loader =  new Loader("client");
 		} catch (Exception e) {
-			LOGGER.error("Runtime Error in running client modules: " + e.getMessage(), e);
+			LOGGER.error("Runtime error in client loader: {}", e.getMessage(), e);
 		}
 	}
 }

@@ -14,8 +14,8 @@ public class DatapackHelper {
 	private static final Logger LOGGER = LoggerFactory.getLogger("jython-mod");
 
 	/**
-	 * 在所有已存在的世界中启用指定的数据包
-	 * @param packName 数据包文件名（例如：JythonModData.zip）
+	 * Enable the specified datapack in all existing worlds
+	 * @param packName datapack filename (e.g., JythonModData.zip)
 	 */
 	public static void enableDatapackInAllWorlds(String packName) {
 		List<Path> worldDirs = new ArrayList<>();
@@ -60,9 +60,9 @@ public class DatapackHelper {
 	}
 
 	/**
-	 * 在指定世界中启用数据包
-	 * @param worldDir 世界文件夹路径
-	 * @param packName 数据包文件名
+	 * Enable datapack in a specific world
+	 * @param worldDir world folder path
+	 * @param packName datapack filename
 	 */
 	private static void enableDatapackInWorld(Path worldDir, String packName) {
 		try {
@@ -71,7 +71,7 @@ public class DatapackHelper {
 			Path datapackPath = datapacksDir.resolve(packName);
 
 			if (!Files.exists(datapackPath)) {
-				LOGGER.debug("Datapack not found in " + worldDir + ": " + packName);
+				LOGGER.debug("Datapack not found in {}: {}", worldDir, packName);
 				return;
 			}
 
@@ -138,8 +138,8 @@ public class DatapackHelper {
 	}
 
 	/**
-	 * 启用数据包（供Python调用的简化接口）
-	 * @param packName 数据包文件名
+	 * Simplified interface for Python to enable datapacks
+	 * @param packName datapack filename
 	 */
 	public static void enableDatapack(String packName) {
 		enableDatapackInAllWorlds(packName);
