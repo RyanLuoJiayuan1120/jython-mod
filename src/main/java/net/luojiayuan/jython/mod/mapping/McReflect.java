@@ -7,6 +7,32 @@ import net.fabricmc.loader.api.FabricLoader;
 
 public class McReflect {
 
+    /**
+     * 通过 yarn 类名获取对应的 obf 类名字符串（自动处理混淆映射）。
+     * 供 GraalPy 使用：GraalPy 的 java.type() 需要字符串类名。
+     */
+    public static String getClassName(String yarnClass) throws Exception {
+        boolean devEnv = FabricLoader.getInstance().isDevelopmentEnvironment();
+        String className;
+        if (devEnv) {
+            className = yarnClass;
+        } else {
+            className = MappingBridge.getObfClass(yarnClass);
+        }
+        if (className == null) {
+            throw new RuntimeException("找不到映射: " + yarnClass);
+        }
+        return className;
+    }
+
+    /**
+     * 通过 yarn 类名获取对应的 Java Class 对象（自动处理混淆映射）。
+     * 供 Jython import 钩子使用，Jython 可以直接使用 Class 对象。
+     */
+    public static Class<?> getClass(String yarnClass) throws Exception {
+        return Class.forName(getClassName(yarnClass));
+    }
+
     public static Object call(
             String yarnClass,
             String yarnMethod,
