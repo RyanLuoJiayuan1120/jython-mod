@@ -47,3 +47,5 @@ custom/output/directory/jython-mod-1.0.0-dev.jar
 item_example.zip
 
 .claude/
+
+*/__pycache__/*
