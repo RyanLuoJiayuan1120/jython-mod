@@ -53,7 +53,7 @@ boolean isActive = true;
 
 **Python:**
 ```python
-name = "Steve"
+name = "碧月狐"
 count = 42
 isActive = True
 ```
@@ -74,7 +74,7 @@ public int add(int a, int b) {
 **Python:**
 ```python
 def greet(name):
-    print("Hello, " + name)
+    print("接下来要暴富的人是—— " + name)
 
 def add(a, b):
     return a + b
@@ -96,11 +96,11 @@ if (value > 10) {
 **Python:**
 ```python
 if value > 10:
-    print("Large")
+    print("巨硬")
 elif value > 5:
-    print("Medium")
+    print("微软")
 else:
-    print("Small")
+    print("好𤆵") # 应该是这样写的，四川话
 ```
 
 ### 4. 循环
@@ -120,7 +120,7 @@ for i in range(10):
 
 **Java (增强 for 循环):**
 ```java
-List<String> items = Arrays.asList("A", "B", "C");
+List<String> items = Arrays.asList("Never Gonna Give You Up 破亿了", "坏消息：被骗了", "好消息：真好听");
 for (String item : items) {
     System.out.println(item);
 }
@@ -128,7 +128,7 @@ for (String item : items) {
 
 **Python:**
 ```python
-items = ["A", "B", "C"]
+items = ["快去挨骗", "https://www.bilibili.com/video/BV1GJ411x7h7", "快！！！！"]
 for item in items:
     print(item)
 ```
@@ -153,18 +153,18 @@ for item in items:
 ```java
 // Java
 List<String> list = new ArrayList<>();
-list.add("item1");
-list.add("item2");
+list.add("多线程要用Vector！！");
+list.add("C艹（");
 ```
 
 ```python
 # Python
-list = ["item1", "item2"]
+list = ["lalalalava~", "chchchchiken~"] # 请关闭自动补全谢谢
 # 或使用 Java 类型
 from java.util import ArrayList
 list = ArrayList()
-list.add("item1")
-list.add("item2")
+list.add("快来玩狐狸之地！！")
+list.add("https://www.foxsland.top/")
 ```
 
 **Java HashMap → Python Dict:**
@@ -462,7 +462,7 @@ Python 引擎会自动选择最匹配的方法：
 ```python
 # Java 有多个 println 方法
 # println(String), println(int), println(Object)
-System.out.println("text")   # 调用 println(String)
+System.out.println("来杯java.lang.NullPointerException摇一摇")   # 调用 println(String)
 System.out.println(42)       # 调用 println(int)
 ```
 
@@ -488,7 +488,7 @@ from java.lang import Runnable
 
 # 方法1: 使用 Python 函数（推荐）
 def my_run():
-    print("Running...")
+    print("我是一位考生，我有4科考完！") # 初二的（
 
 # 引擎会自动适配
 runnable = my_run
@@ -496,7 +496,7 @@ runnable = my_run
 # 方法2: 显式实现接口
 class MyRunnable(Runnable):
     def run(self):
-        print("Running...")
+        print("碧月狐把我咬了")
 
 runnable = MyRunnable()
 ```
@@ -545,7 +545,7 @@ class CustomItem(Item):
 
     def useOn(self, context):
         # 自定义逻辑
-        LOGGER.info("Item used!")
+        LOGGER.info("嗨嗨嗨，我被用了！")
         return Item.useOn(self, context)
 ```
 
@@ -556,7 +556,7 @@ from java.lang import Runnable, Comparable
 
 class MyClass(Runnable, Comparable):
     def run(self):
-        print("Running")
+        print("so NVIDIA I fuck you —— linus")
 
     def compareTo(self, other):
         return 0
@@ -619,7 +619,7 @@ from java.lang import Runnable
 
 class MyRunnable(Runnable):
     def run(self):
-        print("Running...")
+        print("Linux是毁掉巨硬的阿米巴变形虫")
 ```
 
 但 GraalPy 对部分复杂泛型或默认方法的支持可能略有差异，遇到问题时可用 `McReflect.call()` 绕过。
