@@ -48,4 +48,6 @@ item_example.zip
 
 .claude/
 
-*/__pycache__/*
+__pycache__/
+update_version.py
+AGENTS.md

@@ -34,9 +34,24 @@ jobs:
       - name: 编译模组
         run: ./gradlew build
 
-      - name: 获取版本号
+      - name: 获取版本号并判别发布类型
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)"
+          fi
+
+          if [[ "${VERSION}" == *-pre ]]; then
+            PRERELEASE="true"
+          else
+            PRERELEASE="false"
+          fi
+
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "PRERELEASE=${PRERELEASE}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}, prerelease=${PRERELEASE}"
 
       - name: 创建Release
         uses: softprops/action-gh-release@v1
@@ -47,7 +62,7 @@ jobs:
             !build/libs/*-dev.jar
           name: Release ${{ steps.get_version.outputs.VERSION }}
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.get_version.outputs.PRERELEASE }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

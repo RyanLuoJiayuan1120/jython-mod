@@ -61,9 +61,14 @@ public class McReflect {
             for (Constructor<?> c : clazz.getConstructors()) {
                 if (isArgsMatch(c.getParameterTypes(), args)) {
                     if (matched != null) {
-                        throw new RuntimeException("Constructor overload conflict: " + yarnClass);
+                        if (isMoreSpecific(c.getParameterTypes(), matched.getParameterTypes())) {
+                            matched = c;
+                        } else if (!isMoreSpecific(matched.getParameterTypes(), c.getParameterTypes())) {
+                            throw new RuntimeException("Constructor overload conflict: " + yarnClass);
+                        }
+                    } else {
+                        matched = c;
                     }
-                    matched = c;
                 }
             }
             if (matched == null) {
@@ -73,18 +78,7 @@ public class McReflect {
             Class<?>[] paramTypes = matched.getParameterTypes();
             Object[] unpackedArgs = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
-                unpackedArgs[i] = unpackPolyglotValue(args[i], paramTypes[i]);
-            }
-            for (int i = 0; i < unpackedArgs.length; i++) {
-                if (unpackedArgs[i] instanceof Number) {
-                    Number n = (Number) unpackedArgs[i];
-                    if (paramTypes[i] == float.class) unpackedArgs[i] = n.floatValue();
-                    else if (paramTypes[i] == double.class) unpackedArgs[i] = n.doubleValue();
-                    else if (paramTypes[i] == int.class) unpackedArgs[i] = n.intValue();
-                    else if (paramTypes[i] == long.class) unpackedArgs[i] = n.longValue();
-                    else if (paramTypes[i] == short.class) unpackedArgs[i] = n.shortValue();
-                    else if (paramTypes[i] == byte.class) unpackedArgs[i] = n.byteValue();
-                }
+                unpackedArgs[i] = narrowArg(unpackPolyglotValue(args[i], paramTypes[i]), paramTypes[i]);
             }
             return matched.newInstance(unpackedArgs);
         }
@@ -114,9 +108,14 @@ public class McReflect {
             if (methodName != null && m.getName().equals(methodName)) {
                 if (isArgsMatch(m.getParameterTypes(), args)) {
                     if (matched != null) {
-                        throw new RuntimeException("Method overload conflict: " + yarnMethod);
+                        if (isMoreSpecific(m.getParameterTypes(), matched.getParameterTypes())) {
+                            matched = m;
+                        } else if (!isMoreSpecific(matched.getParameterTypes(), m.getParameterTypes())) {
+                            throw new RuntimeException("Method overload conflict: " + yarnMethod);
+                        }
+                    } else {
+                        matched = m;
                     }
-                    matched = m;
                 }
             }
         }
@@ -127,25 +126,12 @@ public class McReflect {
 
         matched.setAccessible(true);
         
-        // Unpack GraalPy Value objects
+        // Unpack GraalPy Value objects and narrow numeric types
         Object unpackedInstance = unpackPolyglotValue(instance, clazz);
         Class<?>[] paramTypes = matched.getParameterTypes();
         Object[] unpackedArgs = new Object[args.length];
         for (int i = 0; i < args.length; i++) {
-            unpackedArgs[i] = unpackPolyglotValue(args[i], paramTypes[i]);
-        }
-        
-        // GraalPy may pass Double but method expects float; perform numeric narrowing
-        for (int i = 0; i < unpackedArgs.length; i++) {
-            if (unpackedArgs[i] instanceof Number) {
-                Number n = (Number) unpackedArgs[i];
-                if (paramTypes[i] == float.class) unpackedArgs[i] = n.floatValue();
-                else if (paramTypes[i] == double.class) unpackedArgs[i] = n.doubleValue();
-                else if (paramTypes[i] == int.class) unpackedArgs[i] = n.intValue();
-                else if (paramTypes[i] == long.class) unpackedArgs[i] = n.longValue();
-                else if (paramTypes[i] == short.class) unpackedArgs[i] = n.shortValue();
-                else if (paramTypes[i] == byte.class) unpackedArgs[i] = n.byteValue();
-            }
+            unpackedArgs[i] = narrowArg(unpackPolyglotValue(args[i], paramTypes[i]), paramTypes[i]);
         }
         
         try {
@@ -180,7 +166,7 @@ public class McReflect {
                     if (host != null) return host;
                 } catch (Exception ignored) {}
                 
-                // 2. Direct numeric conversion
+                // 2. Direct numeric / boolean / char conversion
                 if (targetType == float.class || targetType == Float.class) {
                     return cls.getMethod("asFloat").invoke(obj);
                 }
@@ -195,6 +181,14 @@ public class McReflect {
                 }
                 if (targetType == boolean.class || targetType == Boolean.class) {
                     return cls.getMethod("asBoolean").invoke(obj);
+                }
+                if (targetType == char.class || targetType == Character.class) {
+                    try {
+                        return (char) (int) cls.getMethod("asInt").invoke(obj);
+                    } catch (Exception ignored) {}
+                    try {
+                        return cls.getMethod("asString").invoke(obj);
+                    } catch (Exception ignored) {}
                 }
                 
                 // 3. Generic as conversion (boxed types)
@@ -250,23 +244,85 @@ public class McReflect {
         return true;
     }
 
+    private static Object narrowArg(Object arg, Class<?> targetType) {
+        if (arg == null) return null;
+        if (targetType == char.class) {
+            if (arg instanceof Number) return (char) ((Number) arg).intValue();
+            if (arg instanceof Character) return ((Character) arg).charValue();
+            if (arg instanceof String) {
+                String s = (String) arg;
+                if (s.length() != 1) {
+                    throw new IllegalArgumentException("Expected single character but got string of length " + s.length());
+                }
+                return s.charAt(0);
+            }
+            return arg;
+        }
+        if (arg instanceof Number) {
+            Number n = (Number) arg;
+            if (targetType == float.class) return n.floatValue();
+            if (targetType == double.class) return n.doubleValue();
+            if (targetType == int.class) return n.intValue();
+            if (targetType == long.class) return n.longValue();
+            if (targetType == short.class) return n.shortValue();
+            if (targetType == byte.class) return n.byteValue();
+        }
+        return arg;
+    }
+
+    private static Class<?> primitiveOf(Class<?> cls) {
+        if (cls == Boolean.class) return boolean.class;
+        if (cls == Byte.class) return byte.class;
+        if (cls == Character.class) return char.class;
+        if (cls == Short.class) return short.class;
+        if (cls == Integer.class) return int.class;
+        if (cls == Long.class) return long.class;
+        if (cls == Float.class) return float.class;
+        if (cls == Double.class) return double.class;
+        return cls;
+    }
+
+    private static boolean isWideningPrimitive(Class<?> target, Class<?> source) {
+        if (target == source) return true;
+        if (target == short.class) return source == byte.class;
+        if (target == int.class) return source == byte.class || source == short.class || source == char.class;
+        if (target == long.class) return source == byte.class || source == short.class || source == char.class || source == int.class;
+        if (target == float.class) return source == byte.class || source == short.class || source == char.class || source == int.class || source == long.class;
+        if (target == double.class) return source == byte.class || source == short.class || source == char.class || source == int.class || source == long.class || source == float.class;
+        return false;
+    }
+
+    private static boolean isMoreSpecific(Class<?>[] candidate, Class<?>[] reference) {
+        if (candidate.length != reference.length) return false;
+        boolean strictlyNarrower = false;
+        for (int i = 0; i < candidate.length; i++) {
+            if (candidate[i] == reference[i]) continue;
+            Class<?> candPrim = primitiveOf(candidate[i]);
+            Class<?> refPrim = primitiveOf(reference[i]);
+            if (candPrim.isPrimitive() && refPrim.isPrimitive()) {
+                if (candPrim == refPrim) continue;
+                if (!isWideningPrimitive(refPrim, candPrim)) return false;
+                strictlyNarrower = true;
+            } else if (candPrim != refPrim) {
+                if (!reference[i].isAssignableFrom(candidate[i])) return false;
+                strictlyNarrower = true;
+            }
+        }
+        return strictlyNarrower;
+    }
+
     private static boolean isAssignable(Class<?> param, Class<?> arg) {
-        // GraalPy Value / Number objects are auto-unpacked by Polyglot at invocation
         String argName = arg.getName();
         if (argName.contains("polyglot") || argName.contains("truffle")) return true;
         if (Number.class.isAssignableFrom(arg)) {
-            if (param == float.class || param == double.class || param == int.class || param == long.class) return true;
+            // Python ints/floats are Number subclasses; accept any numeric primitive target
+            return param.isPrimitive() && param != boolean.class;
         }
         if (param.isPrimitive()) {
-            if (param == boolean.class && arg == Boolean.class) return true;
-            if (param == byte.class && arg == Byte.class) return true;
-            if (param == char.class && arg == Character.class) return true;
-            if (param == short.class && arg == Short.class) return true;
-            if (param == int.class && arg == Integer.class) return true;
-            if (param == long.class && arg == Long.class) return true;
-            if (param == float.class && arg == Float.class) return true;
-            if (param == double.class && arg == Double.class) return true;
-            return false;
+            if (param == boolean.class) return arg == Boolean.class;
+            if (param == char.class) return arg == Character.class || arg == String.class;
+            // Character can be widened to any numeric primitive
+            return arg == Character.class;
         }
         return param.isAssignableFrom(arg);
     }

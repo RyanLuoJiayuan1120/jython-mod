@@ -1,5 +1,7 @@
 # 使用指南
 
+本模组支持 **GraalPy（Python 3）** 与 **Jython（Python 2.7）** 两种脚本引擎。除非有旧代码兼容需求，否则建议新模块优先使用 **GraalPy**，以获得现代 Python 语法和更活跃的生态支持。本文档中的示例默认使用两种引擎都支持的语法。
+
 ## 配置
 
 配置文件位于 `config/jython-mod.json`：
@@ -24,9 +26,9 @@
 | `autoReload` | 是否自动重载脚本 | `false` |
 | `scriptTimeout` | 脚本执行超时时间（秒） | `30` |
 
-## 创建 Jython 模块
+## 创建 Python 模块
 
-Jython 模块是一个 ZIP 文件，结构如下：
+Python 模块是一个 ZIP 文件，结构如下：
 
 ```
 your_mod.zip
@@ -41,7 +43,7 @@ your_mod.zip
 
 ```python
 def main():
-    LOGGER.info("Hello from Jython!")
+    LOGGER.info("Hello from Python!")
 ```
 
 ### 可用变量
@@ -81,9 +83,24 @@ props = mc.Block_Properties.of()
 block = mc.Block(props)
 ```
 
+### 直接导入 Minecraft 类
+
+项目已内置 McReflect import hook，对 `net.minecraft.*`、`com.mojang.*`、`net.fabricmc.*` 下的类会自动做 yarn → obf 映射。因此可以直接使用常规 import 语法：
+
+```python
+from net.minecraft.world.item import Item
+from net.minecraft.world.level.block import Block
+from net.minecraft.resources import Identifier
+
+item = Item()
+id = Identifier.fromNamespaceAndPath("mymod", "my_item")
+```
+
+> 该 hook 同时支持 Jython 与 GraalPy 环境。
+
 ### McReflect — 反射调用（无需 import Java 类）
 
-适用于需要动态调用 Minecraft 内部方法或构造函数的场合：
+如果目标类不在上述命名空间，或需要动态调用方法 / 构造函数 / 访问字段，可以使用 `McReflect.call()`：
 
 ```python
 from net.luojiayuan.jython.mod.mapping import McReflect
@@ -124,6 +141,40 @@ from net.luojiayuan.jython.mod import Jythonmod
 if Jythonmod.CONFIG.debugMode:
     LOGGER.info("Debug mode enabled")
 ```
+
+### BytecodeHelper — 注册字节码转换器
+
+模组在 `preLaunch` 阶段通过 `BytecodeHook` 钩住了 Mixin Transformer，允许在 Mixin 转换完成后继续修改类的字节码。
+
+GraalPy 用法（推荐）：
+
+```python
+from net.luojiayuan.jython.mod.bytecode import BytecodeHelper
+
+def my_transform(className, classBytes):
+    # className: 类的全限定名，如 "net.minecraft.class_1234"
+    # classBytes: 字节数组
+    # 返回修改后的字节数组，无需修改则直接返回 classBytes
+    LOGGER.info("Transforming: " + className)
+    return classBytes
+
+BytecodeHelper.registerTransformer(my_transform)
+```
+
+Jython 用法：
+
+```python
+from net.luojiayuan.jython.mod.bytecode import BytecodeHelper, BytecodeTransformer
+
+class MyTransformer(BytecodeTransformer):
+    def transform(self, className, classBytes):
+        LOGGER.info("Transforming: " + className)
+        return classBytes
+
+BytecodeHelper.registerTransformer(MyTransformer())
+```
+
+> 转换器在类加载时同步执行，应避免耗时操作；错误会被捕获并记录到日志。
 
 ## 资源包支持
 
