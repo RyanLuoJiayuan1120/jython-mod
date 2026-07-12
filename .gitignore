@@ -49,5 +49,5 @@ item_example.zip
 .claude/
 
 __pycache__/
-update_version.py
 AGENTS.md
+tools/
