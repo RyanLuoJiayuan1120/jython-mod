@@ -1,8 +1,6 @@
 package net.luojiayuan.jython.mod.engine.graalpy;
 
 import net.luojiayuan.jython.mod.Jythonmod;
-import net.luojiayuan.jython.mod.config.ModConfig;
-import net.luojiayuan.jython.mod.engine.RunnerMain;
 
 public class GpIniter {
     public GpIniter() {

@@ -1,23 +1,11 @@
 package net.luojiayuan.jython.mod.bytecode;
 
 import org.graalvm.polyglot.Value;
-import org.python.core.PyArray;
-import org.python.core.PyObject;
-import org.python.core.PyString;
 
 /**
- * 字节码转换辅助类，兼容 Jython 和 GraalPy 两种 Python 引擎。
+ * 字节码转换辅助类，支持 GraalPy 引擎。
  *
- * <p>使用示例（Jython）：
- * <pre>
- *   from net.luojiayuan.jython.mod.bytecode import BytecodeHelper, BytecodeTransformer
- *   class MyTransformer(BytecodeTransformer):
- *       def transform(self, className, classBytes):
- *           return classBytes
- *   BytecodeHelper.registerTransformer(MyTransformer())
- * </pre>
- *
- * <p>使用示例（GraalPy）：
+ * <p>使用示例：
  * <pre>
  *   from net.luojiayuan.jython.mod.bytecode import BytecodeHelper
  *   def my_transform(className, classBytes):
@@ -32,20 +20,6 @@ public class BytecodeHelper {
      */
     public static void registerTransformer(BytecodeTransformer transformer) {
         BytecodeRegistry.register(transformer);
-    }
-
-    /**
-     * 注册 Jython Python 回调作为转换器。
-     * 回调签名: def transform(className: str, classBytes: bytes) -> bytes
-     */
-    public static void registerTransformer(PyObject callback) {
-        BytecodeRegistry.register((className, bytes) -> {
-            PyObject result = callback.__call__(
-                    new PyString(className),
-                    new PyArray(Byte.TYPE, bytes)
-            );
-            return (byte[]) result.__tojava__(byte[].class);
-        });
     }
 
     /**

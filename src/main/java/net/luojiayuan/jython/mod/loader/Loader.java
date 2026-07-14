@@ -3,18 +3,14 @@ package net.luojiayuan.jython.mod.loader;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Vector;
-import org.python.core.PyObject;
-import org.python.util.PythonInterpreter;
 import net.luojiayuan.jython.mod.Jythonmod;
-import net.luojiayuan.jython.mod.PythonLogger;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
 import net.luojiayuan.jython.mod.builder.*;
-import net.luojiayuan.jython.mod.engine.jython.JyRunner;
 import net.luojiayuan.jython.mod.engine.graalpy.GpRunner;
 import net.luojiayuan.jython.mod.engine.RunnerMain;
 public class Loader {
     public Vector<File> dirs = new Vector<File>();
-    public Vector<String> JythonMods = new Vector<String>();
+    public Vector<String> mods = new Vector<String>();
 
     public Loader(String env_type){
         Scanner(); ModLoader(env_type);
@@ -52,7 +48,7 @@ public class Loader {
                 File[] files = folder.listFiles();
                 for (File file : files) {
                     try {
-                        JythonMods.add(file.getAbsolutePath());
+                        mods.add(file.getAbsolutePath());
                     } catch (Exception e){
                         Jythonmod.LOGGER.error("Failed to list dir \"{}\": {}", folder, e.toString());
                     }
@@ -62,16 +58,10 @@ public class Loader {
             }
             
         }
-        for (String Mod : JythonMods) {
+        for (String Mod : mods) {
             try {
                 Jythonmod.LOGGER.info("Running mod \"{}\"", Mod);
-                RunnerMain runner = null;
-                if (Jythonmod.CONFIG.engineVersion == 1) {
-                    runner = new JyRunner(env_type, Mod);
-                    
-                } else if (Jythonmod.CONFIG.engineVersion == 2) {
-                    runner = new GpRunner(env_type, Mod);
-                }
+                RunnerMain runner = new GpRunner(env_type, Mod);
 
                 InputStream pythonScript = getClass().getResourceAsStream("/assets/jython-mod/jython/zipimporter.py");
                 runner.runScript(pythonScript);

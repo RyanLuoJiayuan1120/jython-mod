@@ -40,4 +40,4 @@
 
 > Mixin 是 Fabric 生态中修改游戏代码的重要工具，传统上只能使用 Java 编写。
 
-本项目**不支持**在 Jython 中直接编写 Mixin 类，但提供了 `BytecodeHelper` 字节码转换机制：可以在 Jython / GraalPy 中注册自定义转换器，在 Mixin 转换完成后继续修改类的字节码，从而实现类似的代码注入效果。详见 [USAGE.md](USAGE.md) 中的 `BytecodeHelper` 章节。
+本项目**不支持**在 Python 中直接编写 Mixin 类，但提供了 `BytecodeHelper` 字节码转换机制：可以在 GraalPy 中注册自定义转换器，在 Mixin 转换完成后继续修改类的字节码，从而实现类似的代码注入效果。详见 [USAGE.md](USAGE.md) 中的 `BytecodeHelper` 章节。

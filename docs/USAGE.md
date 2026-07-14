@@ -1,6 +1,6 @@
 # 使用指南
 
-本模组支持 **GraalPy（Python 3）** 与 **Jython（Python 2.7）** 两种脚本引擎。除非有旧代码兼容需求，否则建议新模块优先使用 **GraalPy**，以获得现代 Python 语法和更活跃的生态支持。本文档中的示例默认使用两种引擎都支持的语法。
+本模组使用 **GraalPy（Python 3）** 作为脚本引擎。本文档中的示例均使用 GraalPy 支持的语法。
 
 ## 配置
 
@@ -96,7 +96,7 @@ item = Item()
 id = Identifier.fromNamespaceAndPath("mymod", "my_item")
 ```
 
-> 该 hook 同时支持 Jython 与 GraalPy 环境。
+> 该 hook 在 GraalPy 环境中生效。
 
 ### McReflect — 反射调用（无需 import Java 类）
 
@@ -104,15 +104,14 @@ id = Identifier.fromNamespaceAndPath("mymod", "my_item")
 
 ```python
 from net.luojiayuan.jython.mod.mapping import McReflect
-from java.lang import String, Float
 
 # 调用静态方法
 id = McReflect.call(
     "net.minecraft.resources.Identifier",
     "fromNamespaceAndPath",
     None,
-    String("mymod"),
-    String("my_block")
+    "mymod",
+    "my_block"
 )
 
 # 调用构造函数（使用 "<init>"）
@@ -146,8 +145,6 @@ if Jythonmod.CONFIG.debugMode:
 
 模组在 `preLaunch` 阶段通过 `BytecodeHook` 钩住了 Mixin Transformer，允许在 Mixin 转换完成后继续修改类的字节码。
 
-GraalPy 用法（推荐）：
-
 ```python
 from net.luojiayuan.jython.mod.bytecode import BytecodeHelper
 
@@ -159,19 +156,6 @@ def my_transform(className, classBytes):
     return classBytes
 
 BytecodeHelper.registerTransformer(my_transform)
-```
-
-Jython 用法：
-
-```python
-from net.luojiayuan.jython.mod.bytecode import BytecodeHelper, BytecodeTransformer
-
-class MyTransformer(BytecodeTransformer):
-    def transform(self, className, classBytes):
-        LOGGER.info("Transforming: " + className)
-        return classBytes
-
-BytecodeHelper.registerTransformer(MyTransformer())
 ```
 
 > 转换器在类加载时同步执行，应避免耗时操作；错误会被捕获并记录到日志。

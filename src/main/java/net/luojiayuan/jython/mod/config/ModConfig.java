@@ -7,7 +7,7 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 @Config(name = "jython-mod")
 public class ModConfig implements ConfigData {
 
-	// 是否启用Jython模组
+	// 是否启用模组
 	public boolean enabled = true;
 
 	// 是否开启调试模式
@@ -30,9 +30,6 @@ public class ModConfig implements ConfigData {
 	// Python系统路径（可选，用逗号分隔）
 	public String pythonPath = "";
 
-	// Jython引擎版本（1:Jython或2:Graalpy）
-	public int engineVersion = 1;
-	
 	@ConfigEntry.Gui.RequiresRestart
 	public String modsPaths = "{gamedir}/jymods";
 }

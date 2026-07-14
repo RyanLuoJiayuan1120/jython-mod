@@ -6,9 +6,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.BlockItem;
 
 /**
- * Minecraft 类的辅助类，用于 Jython 访问
+ * Minecraft 类的辅助类，用于 Python 访问
  *
- * 使用示例（Jython）:
+ * 使用示例:
  * from net.luojiayuan.jython.mod.libs import MinecraftClasses as mc
  *
  * # 创建方块属性

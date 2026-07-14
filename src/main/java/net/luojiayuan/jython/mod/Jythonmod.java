@@ -9,7 +9,6 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 import net.luojiayuan.jython.mod.config.ModConfig;
 import net.luojiayuan.jython.mod.engine.graalpy.GpIniter;
-import net.luojiayuan.jython.mod.engine.jython.JyIniter;
 
 public class Jythonmod implements ModInitializer {
 	public static final String MOD_ID = "jython-mod";
@@ -24,11 +23,7 @@ public class Jythonmod implements ModInitializer {
 		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 		MappingLoader.Loader();
-		if (CONFIG.engineVersion == 1) {
-			JyIniter initer = new JyIniter();
-		} else if (CONFIG.engineVersion == 2) {
-			GpIniter initer = new GpIniter();
-		}
+		GpIniter initer = new GpIniter();
 		MappingBridge.init();
 		LOGGER.debug("Script path: {}", path_);
 		LOGGER.info("Jython Mod initialized");

@@ -8,32 +8,20 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
-import org.python.core.PyObject;
 
 /*
 * 物品类
 *
 * === 基础注册示例 ===
-* 如何注册？(Jython)
+* 如何注册？
 * from net.minecraft.world.item import Item
 * from net.luojiayuan.jython.mod.libs import item
 * xxx = item.register("物品名",<模组名>, lambda: Item(), Item.Properties());
 *
-* === 毒食物示例 (Java) ===
-* public static final Consumable POISON_FOOD_CONSUMABLE_COMPONENT = Consumables.defaultFood()
-*         // The duration is in ticks, 20 ticks = 1 second
-*         .onConsume(new ApplyStatusEffectsConsumeEffect(new MobEffectInstance(MobEffects.POISON, 6 * 20, 1), 1.0f))
-*         .build();
-*
-* public static final FoodProperties POISON_FOOD_COMPONENT = new FoodProperties.Builder()
-*         .alwaysEdible()
-*         .build();
-*
-* === 毒食物示例 (Jython) ===
+* === 毒食物示例 ===
 * from net.minecraft.world.effect import MobEffects
 * from net.minecraft.world.effect import MobEffectInstance
 * from net.minecraft.world.food import FoodProperties
-* from net.minecraft.world.food import FoodConsumable
 * from net.minecraft.world.item.consumables import Consumable
 * from net.minecraft.world.item.consumables import Consumables
 * from net.minecraft.world.item.consumponents import ApplyStatusEffectsConsumeEffect
@@ -54,28 +42,14 @@ import org.python.core.PyObject;
 
 public class item {
 	/**
-	 * 注册物品（Jython版本 - 接受PyObject）
+	 * 注册物品
 	 *
 	 * @param name 物品名称（不含模组ID前缀）
 	 * @param ModName 模组ID
-	 * @param pyCallable Python可调用对象（函数或lambda）
+	 * @param itemFactory 物品工厂函数
 	 * @param settings 物品属性
 	 * @return 注册的物品实例
 	 */
-	public static Item register(String name, String ModName, PyObject pyCallable, Item.Properties settings) {
-		// 将Python函数转换为Java Function
-		Function<Item.Properties, Item> itemFactory = new Function<Item.Properties, Item>() {
-			@Override
-			public Item apply(Item.Properties props) {
-				// 调用Python函数
-				PyObject result = pyCallable.__call__(org.python.core.Py.java2py(props));
-				return (Item) result.__tojava__(Item.class);
-			}
-		};
-
-		return register(name, ModName, itemFactory, settings);
-	}
-
 	public static <T extends Item> T register(String name, String ModName, Function<Item.Properties, T> itemFactory, Item.Properties settings) {
 		ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ModName, name));
 

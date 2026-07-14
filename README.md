@@ -4,13 +4,11 @@
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/FfkFkdhb)
 [![QQ群](https://img.shields.io/badge/QQ群-1094507536-blue)](https://qm.qq.com/q/1094507536)
 
-> ⚠️ **注意：本模组同时支持 GraalPy 与 Jython。** GraalPy 运行 Python 3.x，Jython 运行 Python 2.7。新模块建议优先使用 GraalPy。
-
-一个基于 GraalPy / Jython 的 Minecraft Fabric 模组，允许使用 Python 编写模组功能。
+一个基于 GraalPy 的 Minecraft Fabric 模组，允许使用 Python 3 编写模组功能。
 
 ## 特性
 
-- 🐍 **双引擎支持**：GraalPy（Python 3，推荐）+ Jython（Python 2.7）
+- 🐍 **GraalPy 引擎**：运行 Python 3 脚本
 - ⚙️ **字节码转换器**：通过 `BytecodeHelper` 在 Mixin 之后注册自定义类转换逻辑
 
 ## 系统要求
@@ -47,7 +45,7 @@ def main():
 ## 文档
 
 - [使用指南](docs/USAGE.md) — 配置、API、资源包 / 数据包
-- [Java → Python 教程](docs/JAVA_TO_JTHON_TUTORIAL.md) — 语法转换、类型对照
+- [Java → Python 教程](docs/JAVA_TO_PYTHON_TUTORIAL.md) — 语法转换、类型对照
 - [故障排除](docs/TROUBLESHOOTING.md) — 常见问题与调试
 
 ## 开发

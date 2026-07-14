@@ -27,7 +27,6 @@ public class McReflect {
 
     /**
      * Returns the Java Class object for a given Yarn class name.
-     * Used by Jython import hooks.
      */
     public static Class<?> getClass(String yarnClass) throws Exception {
         return Class.forName(getClassName(yarnClass));

@@ -15,26 +15,22 @@
 4. [导入 Java 类](#导入-java-类)
 5. [实际示例](#实际示例)
 6. [常见问题](#常见问题)
-7. [GraalPy 与 Jython 差异](#graalpy-与-jython-差异)
 
 ---
 
 ## 环境准备
 
-本模组同时支持两种 Python-on-Java 引擎：
+本模组使用 **GraalPy** 作为 Python-on-Java 引擎：
 
 | 引擎 | Python 版本 | 特点 |
 |------|-------------|------|
-| **GraalPy** | Python 3.x | **推荐**。现代 Python 语法、更好的性能、与 Java 互操作通过 Polyglot / `java.type()` |
-| **Jython** | Python 2.7 | 传统 Java 实现，可直接 `import` Java 包，但语法较老 |
+| **GraalPy** | Python 3.x | 现代 Python 语法、更好的性能、与 Java 互操作通过 Polyglot / `java.type()` |
 
-两种引擎都可以：
+GraalPy 支持：
 - 直接导入和使用 Java 类
 - 继承 Java 类
 - 实现 Java 接口
 - 调用 Java 方法
-
-> 如果你的模块没有特殊兼容需求，建议优先使用 **GraalPy**（Python 3）编写，以获得更现代的语法和更活跃的生态支持。
 
 最终用户模块以 ZIP 形式放入 `jymods/` 目录。
 
@@ -200,8 +196,9 @@ from net.luojiayuan.jython.mod.libs import item, block
 # 导入嵌套类
 from net.minecraft.world.item import Item.Properties
 
-# 使用 import 语句
-import java.util.ArrayList
+# 其他 Java 类可通过 java.type 获取
+import java
+ArrayList = java.type('java.util.ArrayList')
 ```
 
 > **Minecraft 类的自动映射**：本模组为 `net.minecraft.*`、`com.mojang.*`、`net.fabricmc.*` 注册了 import hook。在生产环境（类名被混淆）下，上述 `from net.minecraft.xxx import Yyy` 语句会自动通过 McReflect 解析为对应的 obf 类名，无需手动处理映射。**有出问题的可能性！！！！！！**
@@ -472,19 +469,17 @@ System.out.println(42)       # 调用 println(int)
 # 方法1: 使用 Python 列表（会自动转换）
 arr = [1, 2, 3, 4, 5]
 
-# 方法2: 创建 Java 数组
-from jarray import array
-java_array = array([1, 2, 3], 'i')  # 'i' 表示 int
-
-# 方法3: 使用 Java 类
-from java.lang import String
-string_array = String(["A", "B", "C"])
+# 方法2: 使用 java.type
+import java
+StringArray = java.type('java.lang.String[]')
+string_array = StringArray(["A", "B", "C"])
 ```
 
 ### Q3: 如何处理接口和回调？
 
 ```python
-from java.lang import Runnable
+import java
+Runnable = java.type('java.lang.Runnable')
 
 # 方法1: 使用 Python 函数（推荐）
 def my_run():
@@ -500,12 +495,6 @@ class MyRunnable(Runnable):
 
 runnable = MyRunnable()
 ```
-
-### Q4: 如何选择 GraalPy 还是 Jython？
-
-- **新模块推荐直接使用 GraalPy（Python 3）**：更现代的语法、更丰富的第三方库、更好的长期维护性。
-- **旧模块或依赖 Jython 特有生态时**：可继续使用 Jython，但需注意 Python 2.7 的语法限制。
-- 本模组对两种引擎的 API 保持一致，大部分代码无需修改即可在两者间切换。
 
 ### Q5: 如何访问 Java 静态成员？
 
@@ -580,80 +569,6 @@ class MyClass(Runnable, Comparable):
 | `null` | `None` |
 | `&&` \|\| `!` | `and`, `or`, `not` |
 | `i++` | `i += 1` |
-
----
-
-## GraalPy 与 Jython 差异
-
-> 本章节帮助你决定使用哪种引擎，并避免在两种引擎间切换时踩坑。
-
-### 1. Python 版本
-
-| 特性 | GraalPy | Jython |
-|------|---------|--------|
-| Python 版本 | 3.x | 2.7 |
-| 异常语法 | `except Exception as e:` | `except Exception, e:` |
-| print 语句 | `print("Hello")` 函数 | 两者皆可，但 `print "Hello"` 仅 Jython 支持 |
-| 字符串类型 | `str`（Unicode） | `str`（字节串）/ `unicode` |
-| 类型注解 | 支持 | 不支持 |
-| f-string | 支持 | 不支持 |
-
-### 2. 导入 Java 类
-
-两种引擎都支持通过 import hook 直接导入 Minecraft 类：
-
-```python
-from net.minecraft.world.item import Item
-```
-
-底层差异：
-- **GraalPy**：通过 `java.type()` 与 Polyglot 桥接，依赖 `McReflect.getClassName()` 做混淆映射。
-- **Jython**：通过 `Class.forName()` 直接加载，依赖 `McReflect.getClass()` 做混淆映射。
-
-### 3. 实现 Java 接口 / 继承 Java 类
-
-两者语法相同：
-
-```python
-from java.lang import Runnable
-
-class MyRunnable(Runnable):
-    def run(self):
-        print("Linux是毁掉巨硬的阿米巴变形虫")
-```
-
-但 GraalPy 对部分复杂泛型或默认方法的支持可能略有差异，遇到问题时可用 `McReflect.call()` 绕过。
-
-### 4. 字节码转换器
-
-`BytecodeHelper` 同时支持两种引擎，但回调形式略有不同：
-
-```python
-# GraalPy: 直接传函数
-from net.luojiayuan.jython.mod.bytecode import BytecodeHelper
-
-def my_transform(className, classBytes):
-    return classBytes
-
-BytecodeHelper.registerTransformer(my_transform)
-```
-
-```python
-# Jython: 需要实现 BytecodeTransformer 接口
-from net.luojiayuan.jython.mod.bytecode import BytecodeHelper, BytecodeTransformer
-
-class MyTransformer(BytecodeTransformer):
-    def transform(self, className, classBytes):
-        return classBytes
-
-BytecodeHelper.registerTransformer(MyTransformer())
-```
-
-### 5. 推荐结论
-
-- **新项目、新开发者：首选 GraalPy（Python 3）**。
-- 需要兼容旧代码或依赖 Jython 特有库时，再考虑 Jython。
-- 编写模块时，尽量只使用两种引擎都支持的语法子集，以便未来平滑迁移。
 
 ---
 

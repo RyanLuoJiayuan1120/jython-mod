@@ -28,7 +28,7 @@ public class JythonModServer implements DedicatedServerModInitializer {
 
 		LOGGER.info("Initializing Jython Mod Server...");
 
-		// Jython server initialization - runs server modules only
+		// Server initialization - runs server modules only
 		try {
 			Loader loader =  new Loader("server");
 
