@@ -32,4 +32,8 @@ public class ModConfig implements ConfigData {
 
 	@ConfigEntry.Gui.RequiresRestart
 	public String modsPaths = "{gamedir}/jymods";
+
+	// 第三方 Python 包本地部署目录
+	@ConfigEntry.Gui.RequiresRestart
+	public String pythonPackagesPath = "{gamedir}/graalpy/Lib";
 }

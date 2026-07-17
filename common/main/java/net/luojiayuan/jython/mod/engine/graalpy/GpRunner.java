@@ -1,5 +1,6 @@
 package net.luojiayuan.jython.mod.engine.graalpy;
 
+import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -14,7 +15,7 @@ public class GpRunner extends RunnerMain {
     private Value pythonBindings;
     private final Logger logger;
 
-    public GpRunner(String env_type, String Mod, Logger logger, String gameDir) {
+    public GpRunner(String env_type, String Mod, Logger logger, String gameDir, String pythonPackagesPath) {
         this.logger = logger;
         this.context = Context.newBuilder("python")
                 .allowAllAccess(true)
@@ -25,6 +26,19 @@ public class GpRunner extends RunnerMain {
         Value syspath = sysModule.getMember("path");
         syspath.getMember("append").executeVoid("Lib");
         syspath.getMember("append").executeVoid("/assets/jython-mod/jython");
+
+        // 确保第三方包目录存在并加入 Python 路径
+        if (pythonPackagesPath != null && !pythonPackagesPath.isEmpty()) {
+            File packagesDir = new File(pythonPackagesPath);
+            if (!packagesDir.exists()) {
+                if (packagesDir.mkdirs()) {
+                    logger.debug("Created python packages directory: {}", pythonPackagesPath);
+                } else {
+                    logger.warn("Failed to create python packages directory: {}", pythonPackagesPath);
+                }
+            }
+            syspath.getMember("append").executeVoid(pythonPackagesPath);
+        }
 
         this.pythonBindings = context.getBindings("python");
         
