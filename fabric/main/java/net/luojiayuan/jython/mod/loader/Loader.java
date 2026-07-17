@@ -61,7 +61,7 @@ public class Loader {
         for (String Mod : mods) {
             try {
                 Jythonmod.LOGGER.info("Running mod \"{}\"", Mod);
-                RunnerMain runner = new GpRunner(env_type, Mod);
+                RunnerMain runner = new GpRunner(env_type, Mod, Jythonmod.LOGGER, GameDirHelper.getGameDirPath());
 
                 InputStream pythonScript = getClass().getResourceAsStream("/assets/jython-mod/jython/zipimporter.py");
                 runner.runScript(pythonScript);

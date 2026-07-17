@@ -23,7 +23,7 @@ public class Jythonmod implements ModInitializer {
 		AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 		CONFIG = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 		MappingLoader.Loader();
-		GpIniter initer = new GpIniter();
+		GpIniter initer = new GpIniter(LOGGER, CONFIG.debugMode);
 		MappingBridge.init();
 		LOGGER.debug("Script path: {}", path_);
 		LOGGER.info("Jython Mod initialized");

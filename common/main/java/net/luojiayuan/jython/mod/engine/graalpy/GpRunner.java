@@ -4,18 +4,18 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.graalvm.polyglot.*;
-import org.graalvm.python.embedding.GraalPyResources;
 
-import net.luojiayuan.jython.mod.Jythonmod;
 import net.luojiayuan.jython.mod.PythonLogger;
-import net.luojiayuan.jython.mod.utils.GameDirHelper;
-
 import net.luojiayuan.jython.mod.engine.RunnerMain;
+import org.slf4j.Logger;
+
 public class GpRunner extends RunnerMain {
     private Context context;
     private Value pythonBindings;
+    private final Logger logger;
 
-    public GpRunner(String env_type, String Mod) {
+    public GpRunner(String env_type, String Mod, Logger logger, String gameDir) {
+        this.logger = logger;
         this.context = Context.newBuilder("python")
                 .allowAllAccess(true)
                 .build();
@@ -28,10 +28,9 @@ public class GpRunner extends RunnerMain {
 
         this.pythonBindings = context.getBindings("python");
         
-        String path_ = GameDirHelper.getGameDirPath();
-        pythonBindings.putMember("LOGGER", new PythonLogger(Jythonmod.LOGGER));
+        pythonBindings.putMember("LOGGER", new PythonLogger(logger));
         pythonBindings.putMember("ENV_TYPE", env_type);
-        pythonBindings.putMember("GAME_DIR", path_);
+        pythonBindings.putMember("GAME_DIR", gameDir);
         pythonBindings.putMember("Script", Mod);
     }
 
@@ -40,7 +39,7 @@ public class GpRunner extends RunnerMain {
             String code = new String(script.readAllBytes(), StandardCharsets.UTF_8);
             context.eval("python", code);
         } catch (Exception e) {
-            Jythonmod.LOGGER.error("Error running script", e);
+            logger.error("Error running script", e);
         }
     }
 
