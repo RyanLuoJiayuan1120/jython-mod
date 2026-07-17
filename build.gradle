@@ -26,6 +26,17 @@ repositories {
 	maven { url = 'https://maven.terraformersmc.com/' }
 }
 
+sourceSets {
+	main {
+		java {
+			srcDirs = ['common/main/java', 'fabric/main/java']
+		}
+		resources {
+			srcDirs = ['common/main/resources', 'fabric/main/resources']
+		}
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 
@@ -42,6 +53,9 @@ loom {
 		}
 	}
 }
+
+sourceSets.client.java.srcDirs = ['common/client/java', 'fabric/client/java']
+sourceSets.client.resources.srcDirs = ['common/client/resources', 'fabric/client/resources']
 
 dependencies {
 	// To change the versions see the gradle.properties file

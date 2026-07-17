@@ -130,10 +130,15 @@ except ImportError:
     pass 
 try:
     from net.luojiayuan.jython.mod import Jythonmod
-    from org.python.core import codecs
-    codecs.setDefaultEncoding('utf-8')
     LOGGER = Jythonmod.LOGGER
 except ImportError:
+    pass
+
+try:
+    from org.python.core import codecs
+    codecs.setDefaultEncoding('utf-8')
+except Exception:
+    # GraalPy does not expose Jython's codecs module; default encoding is already UTF-8
     pass
 
 class ModImporter:
