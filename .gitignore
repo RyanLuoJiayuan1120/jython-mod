@@ -51,3 +51,4 @@ item_example.zip
 __pycache__/
 AGENTS.md
 tools/
+cache/
