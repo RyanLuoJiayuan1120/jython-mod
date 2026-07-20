@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "jython-mod",
-	"version": "v0.0.4",
+	"version": "v1.1.2-rel",
 	"name": "jython-mod",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [

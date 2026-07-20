@@ -12,7 +12,7 @@ loader_version=0.18.4
 loom_version=1.15-SNAPSHOT
 
 # Mod Properties
-mod_version=v1.1.2-rel
+mod_version=v1.1.1-pre
 maven_group=net.luojiayuan.jython.mod
 archives_base_name=jython-mod
 
