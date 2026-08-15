@@ -1,17 +1,16 @@
 {
 	"schemaVersion": 1,
 	"id": "jython-mod",
-	"version": "v1.1.2-rel",
+	"version": "${version}",
 	"name": "jython-mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "This is a mod that allows you to use python in minecraft.",
 	"authors": [
 		"RyanLuo2011"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/RyanLuoJiayuan1120/jython-mod"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/jython-mod/icon.png",
 	"environment": "*",
 	"entrypoints": {

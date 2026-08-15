@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "[3,)"
+license = "MIT"
+
+[[mods]]
+modId = "jythonmod"
+version = "${version}"
+displayName = "jython-mod"
+description = "This is a mod that allows you to use python in minecraft."
+authors = "RyanLuo2011"
+logoFile = "icon.png"
+displayTest = "MATCH_VERSION"
+features = { java_version = "[21,)" }
+issueTrackerURL = "https://github.com/RyanLuoJiayuan1120/jython-mod/issues"
+modUrl = "https://github.com/RyanLuoJiayuan1120/jython-mod"
+
+[[dependencies.jythonmod]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.jythonmod]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.11,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.jythonmod]]
+modId = "cloth_config"
+type = "required"
+versionRange = "[21.11.152,)"
+ordering = "NONE"
+side = "BOTH"

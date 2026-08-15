@@ -1,6 +1,6 @@
 package net.luojiayuan.jython.mod.utils;
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.luojiayuan.jython.mod.platform.PlatformHooks;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +18,7 @@ public class GameDirHelper {
 	 * @return 游戏根目录的 Path 对象
 	 */
 	public static Path getGameDir() {
-		return FabricLoader.getInstance().getGameDir();
+		return PlatformHooks.get().getGameDir();
 	}
 
 	/**

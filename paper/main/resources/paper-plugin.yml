@@ -1,0 +1,6 @@
+name: jython-mod
+version: '${version}'
+main: net.luojiayuan.jython.mod.JythonModPaper
+api-version: '1.21'
+description: This is a mod that allows you to use python in minecraft.
+authors: [RyanLuo2011]

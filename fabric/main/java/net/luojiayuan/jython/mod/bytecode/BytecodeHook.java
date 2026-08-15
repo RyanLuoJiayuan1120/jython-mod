@@ -1,6 +1,7 @@
 package net.luojiayuan.jython.mod.bytecode;
 
 import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -10,7 +10,7 @@ import java.util.zip.ZipFile;
 
 import com.google.gson.Gson;
 
-import net.luojiayuan.jython.mod.Jythonmod;
+import net.luojiayuan.jython.mod.ModRuntime;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
 import net.luojiayuan.jython.mod.builder.*;
 import net.luojiayuan.jython.mod.engine.graalpy.GpRunner;
@@ -30,30 +30,30 @@ public class Loader {
 
     public Loader(String env_type){
         this.gameDir = GameDirHelper.getGameDirPath();
-        this.pythonPackagesPath = Jythonmod.CONFIG.pythonPackagesPath.replace("{gamedir}", gameDir);
+        this.pythonPackagesPath = ModRuntime.CONFIG.pythonPackagesPath.replace("{gamedir}", gameDir);
         Scanner();
         ModLoader(env_type);
         try {
             PacksPacker(env_type);
         } catch (Exception e) {
-            Jythonmod.LOGGER.error(e.toString());
+            ModRuntime.LOGGER.error(e.toString());
         }
     }
 
     private void Scanner(){
-        String modsPath = Jythonmod.CONFIG.modsPaths;
+        String modsPath = ModRuntime.CONFIG.modsPaths;
         String resolvedPath = modsPath.replace("{gamedir}", gameDir);
         String[] resolvedPaths = resolvedPath.split(";"); // NOTE: paths must not contain semicolons
         
         for (String path : resolvedPaths){
             File folder = new File(path);
             if (!folder.exists()) {
-                Jythonmod.LOGGER.debug("Creating dir: {}", path);
+                ModRuntime.LOGGER.debug("Creating dir: {}", path);
                 try {
                     folder.mkdirs();
-                    Jythonmod.LOGGER.debug("Created dir: {}", path);
+                    ModRuntime.LOGGER.debug("Created dir: {}", path);
                 } catch (Exception e){
-                    Jythonmod.LOGGER.error("Failed to create dir \"{}\": {}", path, e.toString());
+                    ModRuntime.LOGGER.error("Failed to create dir \"{}\": {}", path, e.toString());
                 }
             }
             dirs.add(new File(path));
@@ -74,7 +74,7 @@ public class Loader {
                         if (file.isFile() && file.getName().toLowerCase().endsWith(".zip")) {
                             ModConfigJson cfg = readModConfig(file);
                             if (cfg != null) {
-                                Jythonmod.LOGGER.info("Mod config: {} v{} dependencies: {}",
+                                ModRuntime.LOGGER.info("Mod config: {} v{} dependencies: {}",
                                         cfg.name != null ? cfg.name : file.getName(),
                                         cfg.version != null ? cfg.version : "?",
                                         cfg.dependencies != null ? cfg.dependencies : "[]");
@@ -82,17 +82,17 @@ public class Loader {
                             installEmbeddedPackages(file);
                         }
                     } catch (Exception e){
-                        Jythonmod.LOGGER.error("Failed to list dir \"{}\": {}", folder, e.toString());
+                        ModRuntime.LOGGER.error("Failed to list dir \"{}\": {}", folder, e.toString());
                     }
                 }
             } catch (Exception e) {
-                Jythonmod.LOGGER.error("Failed to get dir list: {}", e.toString());
+                ModRuntime.LOGGER.error("Failed to get dir list: {}", e.toString());
             }
         }
         for (String Mod : mods) {
             try {
-                Jythonmod.LOGGER.info("Running mod \"{}\"", Mod);
-                RunnerMain runner = new GpRunner(env_type, Mod, Jythonmod.LOGGER, gameDir, pythonPackagesPath);
+                ModRuntime.LOGGER.info("Running mod \"{}\"", Mod);
+                RunnerMain runner = new GpRunner(env_type, Mod, ModRuntime.LOGGER, gameDir, pythonPackagesPath);
 
                 InputStream pythonScript = getClass().getResourceAsStream("/assets/jython-mod/jython/zipimporter.py");
                 runner.runScript(pythonScript);
@@ -100,9 +100,9 @@ public class Loader {
                             "importer.Load()"
                 );
                 runner.close();
-                Jythonmod.LOGGER.info("Successfully ran mod \"{}\"", Mod);
+                ModRuntime.LOGGER.info("Successfully ran mod \"{}\"", Mod);
             } catch (Exception e) {
-                Jythonmod.LOGGER.error("Failed to run mod \"{}\": {}", Mod, e.toString(), e);
+                ModRuntime.LOGGER.error("Failed to run mod \"{}\": {}", Mod, e.toString(), e);
             }
         }
     }
@@ -111,9 +111,9 @@ public class Loader {
         File dir = new File(pythonPackagesPath);
         if (!dir.exists()) {
             if (dir.mkdirs()) {
-                Jythonmod.LOGGER.debug("Created python packages directory: {}", pythonPackagesPath);
+                ModRuntime.LOGGER.debug("Created python packages directory: {}", pythonPackagesPath);
             } else {
-                Jythonmod.LOGGER.warn("Failed to create python packages directory: {}", pythonPackagesPath);
+                ModRuntime.LOGGER.warn("Failed to create python packages directory: {}", pythonPackagesPath);
             }
         }
     }
@@ -134,10 +134,10 @@ public class Loader {
                 }
             }
             if (installed) {
-                Jythonmod.LOGGER.info("Installed embedded packages from \"{}\" to \"{}\"", zipFile.getName(), pythonPackagesPath);
+                ModRuntime.LOGGER.info("Installed embedded packages from \"{}\" to \"{}\"", zipFile.getName(), pythonPackagesPath);
             }
         } catch (Exception e) {
-            Jythonmod.LOGGER.error("Failed to install embedded packages from \"{}\": {}", zipFile.getName(), e.toString());
+            ModRuntime.LOGGER.error("Failed to install embedded packages from \"{}\": {}", zipFile.getName(), e.toString());
         }
     }
 
@@ -150,13 +150,13 @@ public class Loader {
                 return new Gson().fromJson(json, ModConfigJson.class);
             }
         } catch (Exception e) {
-            Jythonmod.LOGGER.warn("Failed to read config.json from \"{}\": {}", zipFile.getName(), e.toString());
+            ModRuntime.LOGGER.warn("Failed to read config.json from \"{}\": {}", zipFile.getName(), e.toString());
             return null;
         }
     }
 
     private void PacksPacker(String env) {
-        String[] modPaths = Jythonmod.CONFIG.modsPaths
+        String[] modPaths = ModRuntime.CONFIG.modsPaths
         .replace("{gamedir}", gameDir)
         .split(";");
         ModResourcePackBuilder.build(env, modPaths);

@@ -3,7 +3,7 @@ package net.luojiayuan.jython.mod.mapping;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import net.fabricmc.loader.api.FabricLoader;
+import net.luojiayuan.jython.mod.platform.PlatformHooks;
 
 public class McReflect {
 
@@ -12,7 +12,7 @@ public class McReflect {
      * Used by GraalPy: java.type() requires a string class name.
      */
     public static String getClassName(String yarnClass) throws Exception {
-        boolean devEnv = FabricLoader.getInstance().isDevelopmentEnvironment();
+        boolean devEnv = PlatformHooks.get().isDevelopmentEnvironment();
         String className;
         if (devEnv) {
             className = yarnClass;
@@ -39,7 +39,7 @@ public class McReflect {
             Object... args
     ) throws Exception {
 
-        boolean devEnv = FabricLoader.getInstance().isDevelopmentEnvironment();
+        boolean devEnv = PlatformHooks.get().isDevelopmentEnvironment();
 
         String className;
         if (devEnv) {
