@@ -15,45 +15,61 @@ public class PythonLogger {
 	}
 
 	/**
-	 * Python可调用的info方法
+	 * Python可调用的info方法（支持 SLF4J {} 占位符）
 	 */
-	public void info(String message) {
+	public void info(String message, Object... args) {
 		if (logger.isInfoEnabled()) {
-			logger.info(message);
+			if (args.length == 0) {
+				logger.info(message);
+			} else {
+				logger.info(message, args);
+			}
 		}
 	}
 
 	/**
-	 * Python可调用的warn方法
+	 * Python可调用的warn方法（支持 SLF4J {} 占位符）
 	 */
-	public void warn(String message) {
+	public void warn(String message, Object... args) {
 		if (logger.isWarnEnabled()) {
-			logger.warn(message);
+			if (args.length == 0) {
+				logger.warn(message);
+			} else {
+				logger.warn(message, args);
+			}
 		}
 	}
 
 	/**
 	 * Python可调用的warning方法（warn的别名）
 	 */
-	public void warning(String message) {
-		warn(message);
+	public void warning(String message, Object... args) {
+		warn(message, args);
 	}
 
 	/**
-	 * Python可调用的error方法
+	 * Python可调用的error方法（支持 SLF4J {} 占位符）
 	 */
-	public void error(String message) {
+	public void error(String message, Object... args) {
 		if (logger.isErrorEnabled()) {
-			logger.error(message);
+			if (args.length == 0) {
+				logger.error(message);
+			} else {
+				logger.error(message, args);
+			}
 		}
 	}
 
 	/**
-	 * Python可调用的debug方法
+	 * Python可调用的debug方法（支持 SLF4J {} 占位符）
 	 */
-	public void debug(String message) {
+	public void debug(String message, Object... args) {
 		if (logger.isDebugEnabled()) {
-			logger.debug(message);
+			if (args.length == 0) {
+				logger.debug(message);
+			} else {
+				logger.debug(message, args);
+			}
 		}
 	}
 }

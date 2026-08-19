@@ -22,6 +22,11 @@ public final class NeoForgePlatformHooks implements PlatformHooks {
     }
 
     @Override
+    public boolean usesOfficialMappings() {
+        return true;
+    }
+
+    @Override
     public String getModId() {
         return MOD_ID;
     }

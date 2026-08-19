@@ -8,21 +8,72 @@ import net.luojiayuan.jython.mod.platform.PlatformHooks;
 public class McReflect {
 
     /**
-     * Returns the obfuscated class name for a given Yarn class name.
+     * Returns the runtime class name for a given Yarn class name.
      * Used by GraalPy: java.type() requires a string class name.
      */
     public static String getClassName(String yarnClass) throws Exception {
-        boolean devEnv = PlatformHooks.get().isDevelopmentEnvironment();
-        String className;
-        if (devEnv) {
-            className = yarnClass;
-        } else {
-            className = MappingBridge.getObfClass(yarnClass);
+        if (usesDirectNames()) {
+            return yarnClass;
         }
+        String className = resolveMappedClassName(yarnClass);
         if (className == null) {
             throw new RuntimeException("Mapping not found: " + yarnClass);
         }
         return className;
+    }
+
+    /**
+     * Resolves the runtime (intermediary) class name for a Yarn class name,
+     * handling inner classes written with '.' (Item.Properties -> Item$Properties).
+     *
+     * @return the intermediary class name, or {@code null} when unmapped
+     */
+    private static String resolveMappedClassName(String yarnClass) {
+        String className = MappingBridge.getObfClass(yarnClass);
+        if (className == null && yarnClass.contains(".")) {
+            // Inner classes may be written with '.' in Python (Item.Properties)
+            // while mappings use '$' (Item$Properties). Try right-to-left.
+            String candidate = yarnClass;
+            int idx = candidate.lastIndexOf('.');
+            while (idx > 0) {
+                candidate = candidate.substring(0, idx) + '$' + candidate.substring(idx + 1);
+                className = MappingBridge.getObfClass(candidate);
+                if (className != null) {
+                    break;
+                }
+                idx = candidate.lastIndexOf('.');
+            }
+        }
+        return className;
+    }
+
+    /**
+     * Resolves a field by its Yarn name. In production Fabric the runtime
+     * field name is intermediary (field_xxx), so the Yarn name is translated
+     * via the mapping bridge; dev / NeoForge compare directly.
+     */
+    private static Field findField(String yarnClass, Class<?> clazz, String yarnFieldName)
+            throws NoSuchFieldException {
+        String runtimeFieldName;
+        if (usesDirectNames()) {
+            runtimeFieldName = yarnFieldName;
+        } else {
+            runtimeFieldName = MappingBridge.getObfField(yarnClass, yarnFieldName);
+            if (runtimeFieldName == null) {
+                runtimeFieldName = yarnFieldName;
+            }
+        }
+        return clazz.getField(runtimeFieldName);
+    }
+
+    /**
+     * Whether runtime class names can be used directly without mapping.
+     * True in dev environments (Yarn names) and on NeoForge production
+     * (official Mojang names, which match the Yarn names on 1.21.11).
+     */
+    private static boolean usesDirectNames() {
+        return PlatformHooks.get().isDevelopmentEnvironment()
+                || PlatformHooks.get().usesOfficialMappings();
     }
 
     /**
@@ -39,13 +90,13 @@ public class McReflect {
             Object... args
     ) throws Exception {
 
-        boolean devEnv = PlatformHooks.get().isDevelopmentEnvironment();
+        boolean devEnv = usesDirectNames();
 
         String className;
         if (devEnv) {
             className = yarnClass;
         } else {
-            className = MappingBridge.getObfClass(yarnClass);
+            className = resolveMappedClassName(yarnClass);
         }
 
 
@@ -85,36 +136,41 @@ public class McReflect {
         // Try field access (static fields, no args)
         if (instance == null && (args == null || args.length == 0)) {
             try {
-                Field field = clazz.getField(yarnMethod);
-                return field.get(null);
-            } catch (NoSuchFieldException e) {
+                Field field = findField(yarnClass, clazz, yarnMethod);
+                if (field != null) {
+                    return field.get(null);
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
                 // Not a field, continue to look for methods
             }
         }
 
         Method matched = null;
 
+        // Runtime method names differ by platform:
+        //  - dev / NeoForge: Yarn (named) names, compare directly
+        //  - Fabric production: intermediary names, reverse-map to Yarn first
+        boolean directNames = usesDirectNames();
         for (Method m : clazz.getMethods()) {
-            String methodName;
-            if (devEnv) {
-                methodName = yarnMethod;
-            } else {
-                String desc = getDescriptor(m.getParameterTypes(), m.getReturnType());
-                String named = MappingBridge.getNamedMethod(className, m.getName(), desc);
-                methodName = named != null && named.equals(yarnMethod) ? m.getName() : null;
+            String methodName = m.getName();
+            if (!directNames) {
+                String named = MappingBridge.getNamedMethod(className, methodName);
+                if (named == null || !named.equals(yarnMethod)) {
+                    continue;
+                }
+            } else if (!methodName.equals(yarnMethod)) {
+                continue;
             }
 
-            if (methodName != null && m.getName().equals(methodName)) {
-                if (isArgsMatch(m.getParameterTypes(), args)) {
-                    if (matched != null) {
-                        if (isMoreSpecific(m.getParameterTypes(), matched.getParameterTypes())) {
-                            matched = m;
-                        } else if (!isMoreSpecific(matched.getParameterTypes(), m.getParameterTypes())) {
-                            throw new RuntimeException("Method overload conflict: " + yarnMethod);
-                        }
-                    } else {
+            if (isArgsMatch(m.getParameterTypes(), args)) {
+                if (matched != null) {
+                    if (isMoreSpecific(m.getParameterTypes(), matched.getParameterTypes())) {
                         matched = m;
+                    } else if (!isMoreSpecific(matched.getParameterTypes(), m.getParameterTypes())) {
+                        throw new RuntimeException("Method overload conflict: " + yarnMethod);
                     }
+                } else {
+                    matched = m;
                 }
             }
         }

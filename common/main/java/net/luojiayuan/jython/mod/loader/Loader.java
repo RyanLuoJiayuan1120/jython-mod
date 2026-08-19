@@ -11,6 +11,7 @@ import java.util.zip.ZipFile;
 import com.google.gson.Gson;
 
 import net.luojiayuan.jython.mod.ModRuntime;
+import net.luojiayuan.jython.mod.platform.PlatformHooks;
 import net.luojiayuan.jython.mod.utils.GameDirHelper;
 import net.luojiayuan.jython.mod.builder.*;
 import net.luojiayuan.jython.mod.engine.graalpy.GpRunner;
@@ -33,10 +34,12 @@ public class Loader {
         this.pythonPackagesPath = ModRuntime.CONFIG.pythonPackagesPath.replace("{gamedir}", gameDir);
         Scanner();
         ModLoader(env_type);
-        try {
-            PacksPacker(env_type);
-        } catch (Exception e) {
-            ModRuntime.LOGGER.error(e.toString());
+        if (PlatformHooks.get().supportsResourcePacks()) {
+            try {
+                PacksPacker(env_type);
+            } catch (Exception e) {
+                ModRuntime.LOGGER.error(e.toString());
+            }
         }
     }
 

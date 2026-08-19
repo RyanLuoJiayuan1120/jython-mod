@@ -15,6 +15,43 @@ public interface PlatformHooks {
     boolean isDevelopmentEnvironment();
 
     /**
+     * Whether the production runtime uses official (Mojang) class names directly.
+     *
+     * <p>Fabric remaps production classes to intermediary names, so the shared
+     * code must translate Yarn names via the mapping bridge. NeoForge runs on
+     * official (Mojang) names at runtime, which on modern versions (1.21.11)
+     * already match the Yarn names used by the Python API, so no translation is
+     * needed there.</p>
+     *
+     * @return {@code true} when runtime class names are official Mojang names
+     */
+    default boolean usesOfficialMappings() {
+        return false;
+    }
+
+    /**
+     * Whether this platform can load the Cloth Config configuration GUI
+     * (AutoConfig). Fabric and NeoForge ship Cloth Config; Paper does not,
+     * so the shared bootstrap falls back to a plain JSON config file.
+     *
+     * @return {@code true} when AutoConfig is available
+     */
+    default boolean supportsConfigGui() {
+        return true;
+    }
+
+    /**
+     * Whether this platform supports Minecraft resource-pack / datapack
+     * generation ({@code ModResourcePackBuilder}/{@code ModDataPackBuilder}).
+     * Paper is a server-only platform without a client resource pack system.
+     *
+     * @return {@code true} when pack generation is supported
+     */
+    default boolean supportsResourcePacks() {
+        return true;
+    }
+
+    /**
      * Returns the mod id used by the active mod loader for this mod.
      *
      * <p>Fabric and NeoForge use different id rules: Fabric accepts {@code jython-mod}

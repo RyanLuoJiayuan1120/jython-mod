@@ -9,8 +9,13 @@ import java.util.Map;
 public class MappingBridge {
 
     private static final Map<String, String> CLASS_MAP = new HashMap<>();
+    // yarnClass#yarnMethod -> intermediary method name (ignores descriptor;
+    // descriptor namespaces in tiny differ from runtime descriptors)
     private static final Map<String, String> METHOD_MAP = new HashMap<>();
     private static final Map<String, String> METHOD_MAP_REVERSE = new HashMap<>();
+    // yarnClass#yarnField -> intermediary field name
+    private static final Map<String, String> FIELD_MAP = new HashMap<>();
+    private static final Map<String, String> FIELD_MAP_REVERSE = new HashMap<>();
 
     public static void init() {
         MemoryMappingTree tree = MappingLoader.getTree();
@@ -48,24 +53,56 @@ public class MappingBridge {
             for (Object methodObj : methods) {
                 String yarnMethod = getString(methodObj, "getName", "named");
                 String interMethod = getString(methodObj, "getName", "intermediary");
-                String desc = getString(methodObj, "getDescriptor", "intermediary");
 
-                if (yarnMethod == null || interMethod == null || desc == null) {
+                if (yarnMethod == null || interMethod == null) {
                     continue;
                 }
 
                 String classKey = yarnClass.replace('/', '.');
                 String interClassKey = interClass.replace('/', '.');
 
-                String key = classKey + "#" + yarnMethod + desc;
-                METHOD_MAP.put(key, interMethod);
+                String key = classKey + "#" + yarnMethod;
+                METHOD_MAP.putIfAbsent(key, interMethod);
 
-                String reverseKey = interClassKey + "#" + interMethod + desc;
-                METHOD_MAP_REVERSE.put(reverseKey, yarnMethod);
+                String reverseKey = interClassKey + "#" + interMethod;
+                METHOD_MAP_REVERSE.putIfAbsent(reverseKey, yarnMethod);
+            }
+
+            Iterable<?> fields;
+            try {
+                java.lang.reflect.Method getFields = clsObj.getClass().getDeclaredMethod("getFields");
+                getFields.setAccessible(true);
+                fields = (Iterable<?>) getFields.invoke(clsObj);
+            } catch (Exception e) {
+                ModRuntime.LOGGER.debug("[MappingBridge] getFields failed: {}", e.getMessage());
+                continue;
+            }
+
+            if (fields == null) {
+                continue;
+            }
+
+            for (Object fieldObj : fields) {
+                String yarnField = getString(fieldObj, "getName", "named");
+                String interField = getString(fieldObj, "getName", "intermediary");
+
+                if (yarnField == null || interField == null) {
+                    continue;
+                }
+
+                String classKey = yarnClass.replace('/', '.');
+                String interClassKey = interClass.replace('/', '.');
+
+                String key = classKey + "#" + yarnField;
+                FIELD_MAP.putIfAbsent(key, interField);
+
+                String reverseKey = interClassKey + "#" + interField;
+                FIELD_MAP_REVERSE.putIfAbsent(reverseKey, yarnField);
             }
         }
 
-        ModRuntime.LOGGER.debug("[MappingBridge] Loaded {} classes, {} methods", CLASS_MAP.size(), METHOD_MAP.size());
+        ModRuntime.LOGGER.debug("[MappingBridge] Loaded {} classes, {} methods, {} fields",
+                CLASS_MAP.size(), METHOD_MAP.size(), FIELD_MAP.size());
     }
 
     private static String getString(Object obj, String methodName, String arg) {
@@ -82,11 +119,33 @@ public class MappingBridge {
         return CLASS_MAP.get(yarnClass);
     }
 
-    public static String getObfMethod(String yarnClass, String yarnMethod, String desc) {
-        return METHOD_MAP.get(yarnClass + "#" + yarnMethod + desc);
+    /**
+     * Maps a Yarn method name to its intermediary (runtime) name for the
+     * given Yarn class name. Descriptors are ignored: the intermediary name
+     * is used together with runtime argument matching in {@link McReflect}.
+     */
+    public static String getObfMethod(String yarnClass, String yarnMethod) {
+        return METHOD_MAP.get(yarnClass + "#" + yarnMethod);
     }
 
-    public static String getNamedMethod(String interClass, String interMethod, String desc) {
-        return METHOD_MAP_REVERSE.get(interClass + "#" + interMethod + desc);
+    /**
+     * Maps an intermediary (runtime) method name back to its Yarn name.
+     */
+    public static String getNamedMethod(String interClass, String interMethod) {
+        return METHOD_MAP_REVERSE.get(interClass + "#" + interMethod);
+    }
+
+    /**
+     * Maps a Yarn field name to its intermediary (runtime) name.
+     */
+    public static String getObfField(String yarnClass, String yarnField) {
+        return FIELD_MAP.get(yarnClass + "#" + yarnField);
+    }
+
+    /**
+     * Maps an intermediary (runtime) field name back to its Yarn name.
+     */
+    public static String getNamedField(String interClass, String interField) {
+        return FIELD_MAP_REVERSE.get(interClass + "#" + interField);
     }
 }

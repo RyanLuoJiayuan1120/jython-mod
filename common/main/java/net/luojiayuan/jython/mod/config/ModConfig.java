@@ -4,6 +4,16 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
+/**
+ * Jython Mod configuration.
+ *
+ * <p>Implements {@link ConfigData} so AutoConfig's serializers (Fabric /
+ * NeoForge) can validate and cast the config. The interface lives in Cloth
+ * Config, which is not a server dependency on Paper; the Paper fat jar bundles
+ * Cloth Config (see {@code paperRuntime} in build.gradle) so this class loads
+ * there too. Paper never runs the AutoConfig path ({@code supportsConfigGui()}
+ * is false) and reads the same fields via plain Gson instead.</p>
+ */
 @Config(name = "jython-mod")
 public class ModConfig implements ConfigData {
 

@@ -19,6 +19,13 @@ public class GpRunner extends RunnerMain {
         this.logger = logger;
         this.context = Context.newBuilder("python")
                 .allowAllAccess(true)
+                // Ensure host classes are visible to java.type()/imports:
+                // the default host class loader (thread context class loader,
+                // e.g. the Paper server loader) cannot see plugin/mod classes
+                // loaded by a dedicated class loader (PluginClassLoader).
+                // This loader's parent chain still covers java.*, org.bukkit.*
+                // and the game's own classes.
+                .hostClassLoader(GpRunner.class.getClassLoader())
                 .build();
 
         // 设置 Python 路径（与 GpIniter 保持一致）
