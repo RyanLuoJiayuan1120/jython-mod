@@ -1,0 +1,7 @@
+name: jython-api-demo
+version: '1.0.0'
+main: net.luojiayuan.jython.apidemo.ApiDemoModPaper
+api-version: '1.21'
+description: Example third-party plugin demonstrating JythonModApi registration.
+authors: [jython-mod]
+depend: [jython-mod]

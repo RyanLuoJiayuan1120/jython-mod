@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import org.graalvm.polyglot.*;
 
 import net.luojiayuan.jython.mod.PythonLogger;
+import net.luojiayuan.jython.mod.api.JythonModApi;
 import net.luojiayuan.jython.mod.engine.RunnerMain;
 import org.slf4j.Logger;
 
@@ -53,6 +54,9 @@ public class GpRunner extends RunnerMain {
         pythonBindings.putMember("ENV_TYPE", env_type);
         pythonBindings.putMember("GAME_DIR", gameDir);
         pythonBindings.putMember("Script", Mod);
+        // 对外 API 注册表（只读活视图）：Java 模组注册 -> Python 脚本读取。
+        // 脚本侧经 zipimporter 包装为 ApiView / jython_api 导入钩子。
+        pythonBindings.putMember("API", JythonModApi.readOnlyView());
     }
 
     public void runScript(InputStream script) {

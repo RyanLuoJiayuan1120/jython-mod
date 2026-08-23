@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[3,)"
+license = "MIT"
+
+[[mods]]
+modId = "jython_api_demo"
+version = "1.0.0"
+displayName = "jython_api_demo"
+description = "Example third-party mod demonstrating JythonModApi registration."
+authors = "jython-mod"
+
+[[dependencies.jython_api_demo]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.11,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.jython_api_demo]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.11,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.jython_api_demo]]
+modId = "jythonmod"
+type = "required"
+versionRange = "*"
+ordering = "NONE"
+side = "BOTH"

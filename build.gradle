@@ -59,6 +59,28 @@ sourceSets {
 		resources.srcDirs = ['paper/main/resources', 'common/main/resources']
 		compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
 	}
+
+	// ------------------------------------------------------------------
+	// Example third-party mod (examples/api-demo-mod): demonstrates how a
+	// foreign Java mod registers APIs via JythonModApi. Three platform
+	// variants share the common demo classes; each compiles against the
+	// main output (for JythonModApi) plus its own platform API.
+	// ------------------------------------------------------------------
+	demoFabric {
+		java.srcDirs = ['examples/api-demo-mod/common/main/java', 'examples/api-demo-mod/fabric/main/java']
+		resources.srcDirs = ['examples/api-demo-mod/fabric/main/resources']
+		compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+	}
+	demoNeoForge {
+		java.srcDirs = ['examples/api-demo-mod/common/main/java', 'examples/api-demo-mod/neoforge/main/java']
+		resources.srcDirs = ['examples/api-demo-mod/neoforge/main/resources']
+		compileClasspath += sourceSets.main.output + sourceSets.neoforge.compileClasspath
+	}
+	demoPaper {
+		java.srcDirs = ['examples/api-demo-mod/common/main/java', 'examples/api-demo-mod/paper/main/java']
+		resources.srcDirs = ['examples/api-demo-mod/paper/main/resources']
+		compileClasspath += sourceSets.main.output + sourceSets.paper.compileClasspath
+	}
 }
 
 // GraalPy runtime bundled into the Paper/NeoForge fat jars (resolved by Shadow).
@@ -101,6 +123,11 @@ dependencies {
 	
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// JUnit 5 for the JythonModApi registry + GraalPy wrapper tests.
+	testImplementation platform('org.junit:junit-bom:5.10.2')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation("net.fabricmc.fabric-loom-remap:net.fabricmc.fabric-loom-remap.gradle.plugin:1.14.7")
 	implementation "net.fabricmc:mapping-io:0.3.0"
@@ -191,6 +218,14 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = 'UTF-8'
 }
 
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+	}
+}
+
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
@@ -269,6 +304,62 @@ tasks.named('assemble') {
 	dependsOn tasks.named('neoforgeJar')
 }
 
+// ------------------------------------------------------------------
+// Example third-party mod jars (for smoke tests of JythonModApi).
+// ------------------------------------------------------------------
+tasks.register('demoFabricJar', Jar) {
+	group = 'build'
+	description = 'Builds the example API demo mod (Fabric).'
+	archiveBaseName = project.base.archivesName
+	archiveClassifier = 'demo-fabric'
+	archiveVersion = project.version
+	from(sourceSets.demoFabric.output)
+}
+
+tasks.register('demoNeoForgeJar', Jar) {
+	group = 'build'
+	description = 'Builds the example API demo mod (NeoForge).'
+	archiveBaseName = project.base.archivesName
+	archiveClassifier = 'demo-neoforge'
+	archiveVersion = project.version
+	from(sourceSets.demoNeoForge.output)
+}
+
+tasks.register('demoPaperJar', Jar) {
+	group = 'build'
+	description = 'Builds the example API demo mod (Paper).'
+	archiveBaseName = project.base.archivesName
+	archiveClassifier = 'demo-paper'
+	archiveVersion = project.version
+	from(sourceSets.demoPaper.output)
+}
+
+// Python side of the demo: zips examples/api-demo-python into a jymods module.
+tasks.register('demoPythonZip', Zip) {
+	group = 'build'
+	description = 'Builds the Python demo module zip for JythonModApi smoke tests.'
+	archiveBaseName = 'api-demo-python'
+	archiveVersion = ''
+	destinationDirectory = layout.buildDirectory.dir('libs')
+	from('examples/api-demo-python') {
+		include 'main.py'
+	}
+	rename { 'main.py' }
+}
+
+tasks.register('demoJars') {
+	group = 'build'
+	description = 'Builds all example demo artifacts (Fabric/NeoForge/Paper jars + Python zip).'
+	dependsOn tasks.named('demoFabricJar')
+	dependsOn tasks.named('demoNeoForgeJar')
+	dependsOn tasks.named('demoPaperJar')
+	dependsOn tasks.named('demoPythonZip')
+}
+
+tasks.named('assemble') {
+	dependsOn tasks.named('demoJars')
+}
+
 // configure the maven publication
 // 排除 POM 文件避免 Fabric Loader 扫描时报 zip 错误
 tasks.withType(JavaExec).configureEach {
@@ -277,11 +368,51 @@ tasks.withType(JavaExec).configureEach {
     }
 }
 
+// API-only jar：只编译 api 包源码（依赖为空的纯 Java 构件）。
+// 需在 publishing 块之前注册，publication 里以 tasks.named('apiJar') 引用。
+tasks.register('apiJar', Jar) {
+	group = 'build'
+	description = 'Builds the API-only jar (net.luojiayuan.jython.mod.api, no Minecraft/GraalPy).'
+	archiveBaseName = 'jython-mod-api'
+	archiveVersion = project.mod_version
+	// 直接打包 api 包的 .class（编译产物由 compileJava 提供，源码与主工程同源）
+	from(sourceSets.main.output) {
+		include 'net/luojiayuan/jython/mod/api/**'
+	}
+	manifest {
+		attributes(
+			'Implementation-Title': 'jython-mod-api',
+			'Implementation-Version': project.mod_version
+		)
+	}
+}
+
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
 			artifactId = project.archives_base_name
 			from components.java
+		}
+
+		// API-only 构件：只包含 net.luojiayuan.jython.mod.api 包（纯 JDK，
+		// 无 Minecraft / GraalPy 依赖）。供其它 Java 模组 compileOnly 依赖，
+		// 用于 JythonModApi.register(...) 注册。完整 fat jar 走 Releases。
+		create("mavenApi", MavenPublication) {
+			groupId = project.maven_group
+			artifactId = 'jython-mod-api'
+			version = project.mod_version
+			artifact tasks.named('apiJar')
+			pom {
+				name = 'jython-mod-api'
+				description = 'Jython Mod public API - register APIs callable from Python'
+				url = 'https://github.com/RyanLuoJiayuan1120/jython-mod'
+				licenses {
+					license {
+						name = 'MIT'
+						url = 'https://opensource.org/licenses/MIT'
+					}
+				}
+			}
 		}
 	}
 
@@ -291,5 +422,13 @@ publishing {
 		// Notice: This block does NOT have the same function as the block in the top level.
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
+
+		// GitHub Pages 静态 maven 仓库：CI 把 publishMavenApiPublicationToGitHubPagesRepository
+		// 的输出推到 gh-pages 分支即可。坐标：
+		//   https://<user>.github.io/<repo>/net/luojiayuan/jython/mod/jython-mod-api/<version>/
+		maven {
+			name = 'githubPages'
+			url = layout.buildDirectory.dir('maven-repo')
+		}
 	}
 }

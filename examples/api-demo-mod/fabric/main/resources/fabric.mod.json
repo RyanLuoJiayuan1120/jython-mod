@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "jython-api-demo",
+	"version": "1.0.0",
+	"name": "jython-api-demo",
+	"description": "Example third-party mod demonstrating JythonModApi registration.",
+	"authors": [
+		"jython-mod"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"preLaunch": [
+			"net.luojiayuan.jython.apidemo.ApiDemoModFabric"
+		]
+	},
+	"depends": {
+		"jython-mod": "*"
+	}
+}

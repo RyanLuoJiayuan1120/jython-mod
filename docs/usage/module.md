@@ -44,11 +44,15 @@ def main():
 | `ENV_TYPE` | str | 环境类型：`"common"` / `"client"` / `"server"` |
 | `GAME_DIR` | str | 游戏/服务器根目录路径 |
 | `Script` | str | 当前模块 ZIP 的绝对路径 |
+| `API` | ApiView | 对外 API 注册表只读视图（其它 Java 模组注册的 API），详见 [对外 API](api.md) |
 
 ```python
 def main():
     LOGGER.info("ENV=%s GAME_DIR=%s", ENV_TYPE, GAME_DIR)
     LOGGER.debug("module path: %s", Script)
+    # 调用其它 Java 模组注册的 API（见 docs/usage/api.md）
+    api = API["mymod"]["TradeApi"]
+    api.greet("Python")
 ```
 
 > 注意：`LOGGER` 等方法调用支持 SLF4J 风格占位符 `{}`，也支持 Python 的 `%` 格式化拼接。

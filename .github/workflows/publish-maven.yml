@@ -1,0 +1,57 @@
+name: Publish Maven API
+
+# 构建 API-only jar 并发布到 Cloudflare Pages maven 仓库。
+#
+# 前置条件：
+#   1. Cloudflare Pages 建一个项目（名字如 jython-mod-maven），绑定自定义
+#      域名（如 maven.luojiayuan.de5.net）；
+#   2. GitHub 仓库 Settings -> Secrets and variables -> Actions 添加：
+#        CLOUDFLARE_API_TOKEN  （Pages:Edit 权限的 API token）
+#        CLOUDFLARE_ACCOUNT_ID （Cloudflare 账户 ID）
+#   3. 每次打 v* tag 或手动触发 workflow 后，maven 坐标自动更新：
+#        repositories { maven { url = 'https://maven.luojiayuan.de5.net' } }
+#        dependencies { modCompileOnly "net.luojiayuan.jython.mod:jython-mod-api:v1.2.0-pre" }
+#
+# 说明：只发布 API-only jar（纯 JDK，无 Minecraft/GraalPy 依赖），
+# 完整 fat jar 走 Releases（见 build.yml）。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: 授予执行权限
+        run: chmod +x gradlew
+
+      - name: 构建并发布 API jar 到本地 maven 目录
+        run: ./gradlew publishMavenApiPublicationToGithubPagesRepository
+
+      - name: 安装 wrangler
+        run: npx wrangler --version
+
+      - name: 部署到 Cloudflare Pages
+        run: |
+          npx wrangler pages deploy build/maven-repo \
+            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'jython-mod-maven' }} \
+            --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

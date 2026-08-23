@@ -51,4 +51,6 @@ item_example.zip
 __pycache__/
 AGENTS.md
 tools/
-cache/
+cache/logs/
+logs/
+.wrangler/
