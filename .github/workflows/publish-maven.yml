@@ -10,7 +10,7 @@ name: Publish Maven API
 #        CLOUDFLARE_ACCOUNT_ID （Cloudflare 账户 ID）
 #   3. 每次打 v* tag 或手动触发 workflow 后，maven 坐标自动更新：
 #        repositories { maven { url = 'https://maven.luojiayuan.de5.net' } }
-#        dependencies { modCompileOnly "net.luojiayuan.jython.mod:jython-mod-api:v1.2.0-pre" }
+#        dependencies { modCompileOnly "net.luojiayuan.jython.mod:jython-mod-api:v1.2.1-rel" }
 #
 # 说明：只发布 API-only jar（纯 JDK，无 Minecraft/GraalPy 依赖），
 # 完整 fat jar 走 Releases（见 build.yml）。

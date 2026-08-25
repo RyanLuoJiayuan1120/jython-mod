@@ -358,6 +358,7 @@ tasks.register('demoJars') {
 
 tasks.named('assemble') {
 	dependsOn tasks.named('demoJars')
+	dependsOn tasks.named('apiJar')
 }
 
 // configure the maven publication
