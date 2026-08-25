@@ -61,6 +61,7 @@ jobs:
             build/libs/*.jar
             !build/libs/*-sources.jar
             !build/libs/*-dev.jar
+            !build/libs/*-demo-*.jar
           name: Release ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: ${{ steps.get_version.outputs.PRERELEASE }}
