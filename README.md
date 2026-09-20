@@ -1,5 +1,7 @@
 # Paper 只是实验性的！！！！！
 
+# 本项目作者因学业压力暂时停止更新本项目，预计12月中旬复更
+
 # Jython Mod
 
 [![Build and Release](https://github.com/RyanLuoJiayuan1120/jython-mod/actions/workflows/build.yml/badge.svg)](https://github.com/RyanLuoJiayuan1120/jython-mod/actions)
