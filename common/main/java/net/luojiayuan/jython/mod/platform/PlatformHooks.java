@@ -2,6 +2,8 @@ package net.luojiayuan.jython.mod.platform;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
+import net.luojiayuan.jython.mod.builder.GeneratedPack;
 
 /**
  * Loader-specific operations used by common code.
@@ -42,13 +44,27 @@ public interface PlatformHooks {
 
     /**
      * Whether this platform supports Minecraft resource-pack / datapack
-     * generation ({@code ModResourcePackBuilder}/{@code ModDataPackBuilder}).
-     * Paper is a server-only platform without a client resource pack system.
+     * generation. The generated packs are registered as Fabric built-in packs;
+     * Paper does not have a client resource pack system and NeoForge support is
+     * still pending, so the default is {@code false}.
      *
-     * @return {@code true} when pack generation is supported
+     * @return {@code true} when per-module pack generation is supported
      */
     default boolean supportsResourcePacks() {
-        return true;
+        return false;
+    }
+
+    /**
+     * Registers the generated per-module packs with the platform, marking them
+     * as required and enabled by default.
+     *
+     * <p>Fabric implements this with its built-in pack API. A platform without
+     * support can leave the default no-op; {@link #supportsResourcePacks()}
+     * should then return {@code false}.</p>
+     *
+     * @param packs generated packs, one per Python module
+     */
+    default void registerGeneratedPacks(List<GeneratedPack> packs) {
     }
 
     /**
@@ -67,6 +83,15 @@ public interface PlatformHooks {
      * @return the resource stream, or {@code null} if it is not present
      */
     InputStream findModResource(String modId, String path);
+
+    /**
+     * Platform-native MC helpers exposed to Python as the global {@code McApi}
+     * object. Returns {@code null} when the platform has no implementation yet;
+     * scripts can then fall back to {@code McReflect}.
+     */
+    default Object createMcApi() {
+        return null;
+    }
 
     final class Holder {
         private Holder() {

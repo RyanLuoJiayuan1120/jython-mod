@@ -3,6 +3,8 @@ package net.luojiayuan.jython.mod.mapping;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import net.luojiayuan.jython.mod.platform.PlatformHooks;
 
 public class McReflect {
@@ -208,6 +210,73 @@ public class McReflect {
         }
     }
     
+
+    /**
+     * Mapping-aware invocation without requiring the caller to know the
+     * declaring class. It walks the target's superclasses and interfaces,
+     * reverse-maps each runtime method name to its Yarn name, and invokes the
+     * first matching overload.
+     *
+     * <p>This is the missing piece that lets Python write
+     * {@code McReflect.invoke(player, "getInventory")} instead of having to
+     * know that {@code getInventory} is declared on {@code Player} and named
+     * {@code method_...} at runtime.</p>
+     */
+    public static Object invoke(Object target, String yarnMethod, Object... args) throws Exception {
+        if (target == null) {
+            throw new IllegalArgumentException("target is null");
+        }
+        boolean direct = usesDirectNames();
+        Set<Class<?>> hierarchy = new LinkedHashSet<>();
+        collectHierarchy(target.getClass(), hierarchy);
+
+        for (Class<?> clazz : hierarchy) {
+            String yarnClass = direct ? clazz.getName() : MappingBridge.getNamedClass(clazz.getName());
+            if (yarnClass == null) {
+                continue;
+            }
+            Method matched = null;
+            for (Method m : clazz.getMethods()) {
+                String named = direct ? m.getName()
+                        : MappingBridge.getNamedMethod(clazz.getName(), m.getName());
+                if (!yarnMethod.equals(named)) {
+                    continue;
+                }
+                if (!isArgsMatch(m.getParameterTypes(), args)) {
+                    continue;
+                }
+                if (matched == null || isMoreSpecific(m.getParameterTypes(), matched.getParameterTypes())) {
+                    matched = m;
+                }
+            }
+            if (matched == null) {
+                continue;
+            }
+            matched.setAccessible(true);
+            Class<?>[] paramTypes = matched.getParameterTypes();
+            Object[] unpackedArgs = new Object[args.length];
+            for (int i = 0; i < args.length; i++) {
+                unpackedArgs[i] = narrowArg(unpackPolyglotValue(args[i], paramTypes[i]), paramTypes[i]);
+            }
+            try {
+                return matched.invoke(target, unpackedArgs);
+            } catch (Exception e) {
+                throw new RuntimeException("invoke failed: " + yarnClass + "." + yarnMethod, e);
+            }
+        }
+        throw new RuntimeException("Method not found: " + yarnMethod + " on " + target.getClass().getName());
+    }
+
+    private static void collectHierarchy(Class<?> clazz, Set<Class<?>> out) {
+        if (clazz == null || !out.add(clazz)) {
+            return;
+        }
+        collectHierarchy(clazz.getSuperclass(), out);
+        for (Class<?> iface : clazz.getInterfaces()) {
+            collectHierarchy(iface, out);
+        }
+    }
+
     private static Object unpackPolyglotValue(Object obj, Class<?> targetType) {
         if (obj == null) return null;
         Class<?> cls = obj.getClass();

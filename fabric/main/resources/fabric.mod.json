@@ -28,7 +28,11 @@
 		]
 	},
 	"mixins": [
-		"jython-mod.mixins.json"
+		"jython-mod.mixins.json",
+		{
+			"config": "jython-mod.client.mixins.json",
+			"environment": "client"
+		}
 	],
 	"depends": {
 		"fabricloader": ">=0.18.4",

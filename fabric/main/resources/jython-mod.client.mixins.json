@@ -4,6 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
 	"client": [
+		"client.PackSelectionModelMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

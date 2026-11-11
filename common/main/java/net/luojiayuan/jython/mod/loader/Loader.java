@@ -20,6 +20,26 @@ import net.luojiayuan.jython.mod.engine.RunnerMain;
 public class Loader {
     public Vector<File> dirs = new Vector<File>();
     public Vector<String> mods = new Vector<String>();
+    /**
+     * Keep GraalPy contexts alive for the server lifetime. The upstream loader
+     * closes each context immediately after main() — that makes any Python
+     * callback registered with a Fabric event invalid ("Context is already
+     * closed"). The economy module needs long-lived command/tick listeners, so
+     * contexts are retained until process exit.
+     */
+    private static final Vector<RunnerMain> ACTIVE_RUNNERS = new Vector<RunnerMain>();
+
+    /** Called on server stop so persistent GraalPy contexts do not leak. */
+    public static synchronized void closeAll() {
+        for (RunnerMain runner : ACTIVE_RUNNERS) {
+            try {
+                runner.close();
+            } catch (Throwable t) {
+                ModRuntime.LOGGER.warn("Failed to close Python context: {}", t.toString());
+            }
+        }
+        ACTIVE_RUNNERS.clear();
+    }
     private final String gameDir;
     private final String pythonPackagesPath;
 
@@ -36,7 +56,7 @@ public class Loader {
         ModLoader(env_type);
         if (PlatformHooks.get().supportsResourcePacks()) {
             try {
-                PacksPacker(env_type);
+                PacksPacker();
             } catch (Exception e) {
                 ModRuntime.LOGGER.error(e.toString());
             }
@@ -96,13 +116,14 @@ public class Loader {
             try {
                 ModRuntime.LOGGER.info("Running mod \"{}\"", Mod);
                 RunnerMain runner = new GpRunner(env_type, Mod, ModRuntime.LOGGER, gameDir, pythonPackagesPath);
+                ACTIVE_RUNNERS.add(runner);
 
                 InputStream pythonScript = getClass().getResourceAsStream("/assets/jython-mod/jython/zipimporter.py");
                 runner.runScript(pythonScript);
                 runner.exec("importer = ModImporter(ENV_TYPE, Script) \n"+
                             "importer.Load()"
                 );
-                runner.close();
+                // Intentionally not closed: Python callbacks stay live.
                 ModRuntime.LOGGER.info("Successfully ran mod \"{}\"", Mod);
             } catch (Exception e) {
                 ModRuntime.LOGGER.error("Failed to run mod \"{}\": {}", Mod, e.toString(), e);
@@ -158,11 +179,10 @@ public class Loader {
         }
     }
 
-    private void PacksPacker(String env) {
+    private void PacksPacker() {
         String[] modPaths = ModRuntime.CONFIG.modsPaths
         .replace("{gamedir}", gameDir)
         .split(";");
-        ModResourcePackBuilder.build(env, modPaths);
-        ModDataPackBuilder.build(modPaths);
+        ModPackBuilder.build(modPaths);
     }
 }

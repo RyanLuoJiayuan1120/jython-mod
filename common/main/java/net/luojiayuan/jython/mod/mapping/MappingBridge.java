@@ -9,6 +9,7 @@ import java.util.Map;
 public class MappingBridge {
 
     private static final Map<String, String> CLASS_MAP = new HashMap<>();
+    private static final Map<String, String> CLASS_MAP_REVERSE = new HashMap<>();
     // yarnClass#yarnMethod -> intermediary method name (ignores descriptor;
     // descriptor namespaces in tiny differ from runtime descriptors)
     private static final Map<String, String> METHOD_MAP = new HashMap<>();
@@ -34,7 +35,10 @@ public class MappingBridge {
                 continue;
             }
 
-            CLASS_MAP.put(yarnClass.replace('/', '.'), interClass.replace('/', '.'));
+            String yarnDot = yarnClass.replace('/', '.');
+            String interDot = interClass.replace('/', '.');
+            CLASS_MAP.put(yarnDot, interDot);
+            CLASS_MAP_REVERSE.putIfAbsent(interDot, yarnDot);
 
             Iterable<?> methods;
             try {
@@ -117,6 +121,11 @@ public class MappingBridge {
 
     public static String getObfClass(String yarnClass) {
         return CLASS_MAP.get(yarnClass);
+    }
+
+    /** runtime (intermediary/official) class name -> Yarn class name. */
+    public static String getNamedClass(String runtimeClass) {
+        return CLASS_MAP_REVERSE.get(runtimeClass);
     }
 
     /**

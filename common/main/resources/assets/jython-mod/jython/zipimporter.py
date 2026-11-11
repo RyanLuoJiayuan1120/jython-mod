@@ -280,7 +280,7 @@ class ModImporter:
     # GpRunner 注入到 __main__ 作用域的全局变量。zipimport 加载的模组拥有
     # 独立命名空间，Load() 加载后会把这些变量 setattr 到模组上，使模组内
     # 可以直接使用 LOGGER / ENV_TYPE / GAME_DIR / Script / API。
-    _INJECTED_GLOBALS = ('LOGGER', 'ENV_TYPE', 'GAME_DIR', 'Script', 'API')
+    _INJECTED_GLOBALS = ('LOGGER', 'ENV_TYPE', 'GAME_DIR', 'Script', 'API', 'McApi')
 
     def __init__(self, env, path):
         self.env = env
@@ -288,6 +288,11 @@ class ModImporter:
 
     def Load(self):
         try:
+            # Make sibling modules inside this ZIP importable:
+            #     from npc_view import NpcView
+            import sys
+            if self.path not in sys.path:
+                sys.path.insert(0, self.path)
             importer = zipimport.zipimporter(self.path)
             try:
                 Mod = importer.load_module(self.env)

@@ -25,7 +25,7 @@ NeoForge 使用 **官方（Mojang）映射**，类名与 Yarn 名在 1.21.11 一
 
 ## 资源包 / 数据包
 
-支持。与 Fabric 相同（见 [resources.md](../usage/resources.md)）。
+暂未实现。按模块生成资源包/数据包的逻辑在 Fabric 已落地；NeoForge 需要在 `PlatformHooks.registerGeneratedPacks` 中接入 NeoForge 的内置包 API（见 [resources.md](../usage/resources.md)）。
 
 ## 构建与部署
 

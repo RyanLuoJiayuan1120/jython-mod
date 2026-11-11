@@ -56,6 +56,7 @@ def main():
   - [模块结构](docs/usage/module.md) — ZIP 结构、入口约定、可用变量
   - [辅助库 API](docs/usage/libs.md) — item / block / MinecraftClasses / BytecodeHelper
   - [对外 API](docs/usage/api.md) — 其它 Java 模组向 Python 暴露 API（JythonModApi / jython_api）
+- [内置 MC API](docs/usage/mc.md) — McApi / CallbackAdapter / McReflect.invoke，无需 bridge 模组
   - [Maven 依赖仓库](docs/usage/maven.md) — 通过 Cloudflare Pages 发布 jython-mod-api 供模组依赖
   - [资源包与数据包](docs/usage/resources.md)
   - [第三方 Python 包](docs/usage/packages.md)

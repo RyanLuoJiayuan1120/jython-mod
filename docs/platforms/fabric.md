@@ -31,7 +31,7 @@ Fabric 是模组的主要目标平台，支持完整的客户端 + 服务端环�
 
 ## 资源包 / 数据包
 
-支持。模组自动从模块 ZIP 提取资源生成资源包与数据包（见 [resources.md](../usage/resources.md)）。
+支持。模组为每个模块 ZIP 生成资源包/数据包，通过 Fabric 内置包 API 默认启用，并在客户端选择界面隐藏（见 [resources.md](../usage/resources.md)）。
 
 ## 构建与部署
 

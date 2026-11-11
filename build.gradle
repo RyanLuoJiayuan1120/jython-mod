@@ -249,6 +249,14 @@ tasks.named('shadowJar') {
 	enabled = false
 }
 
+// The GraalPy Gradle plugin creates a Python venv during processResources. This
+// project does not use a venv (and the task fails when the build JVM cannot load
+// the GraalPy posix support library). The runtime resources come from the
+// python-language/python-resources jars, so the venv step is not needed.
+tasks.matching { it.name == 'graalPyResources' }.configureEach {
+	enabled = false
+}
+
 tasks.register('paperJar', ShadowJar) {
 	group = 'build'
 	description = 'Builds a self-contained Paper plugin jar (Paper classes + GraalPy runtime).'

@@ -8,6 +8,7 @@ import org.graalvm.polyglot.*;
 
 import net.luojiayuan.jython.mod.PythonLogger;
 import net.luojiayuan.jython.mod.api.JythonModApi;
+import net.luojiayuan.jython.mod.platform.PlatformHooks;
 import net.luojiayuan.jython.mod.engine.RunnerMain;
 import org.slf4j.Logger;
 
@@ -57,6 +58,14 @@ public class GpRunner extends RunnerMain {
         // 对外 API 注册表（只读活视图）：Java 模组注册 -> Python 脚本读取。
         // 脚本侧经 zipimporter 包装为 ApiView / jython_api 导入钩子。
         pythonBindings.putMember("API", JythonModApi.readOnlyView());
+        try {
+            Object mcApi = PlatformHooks.get().createMcApi();
+            if (mcApi != null) {
+                pythonBindings.putMember("McApi", mcApi);
+            }
+        } catch (Throwable t) {
+            logger.warn("Could not expose McApi: {}", t.toString());
+        }
     }
 
     public void runScript(InputStream script) {

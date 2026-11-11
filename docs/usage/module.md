@@ -45,6 +45,7 @@ def main():
 | `GAME_DIR` | str | 游戏/服务器根目录路径 |
 | `Script` | str | 当前模块 ZIP 的绝对路径 |
 | `API` | ApiView | 对外 API 注册表只读视图（其它 Java 模组注册的 API），详见 [对外 API](api.md) |
+| `McApi` | FabricMcApi | Fabric 平台内置 MC 助手：玩家/背包/种子/消息；详见 [内置 MC API](mc.md) |
 
 ```python
 def main():

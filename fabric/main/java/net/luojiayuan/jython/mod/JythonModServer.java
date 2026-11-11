@@ -1,6 +1,8 @@
 package net.luojiayuan.jython.mod;
 
 import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.luojiayuan.jython.mod.loader.Loader;
 import net.luojiayuan.jython.mod.platform.FabricPlatformHooks;
 import net.luojiayuan.jython.mod.platform.PlatformHooks;
 import org.slf4j.Logger;
@@ -14,5 +16,6 @@ public class JythonModServer implements DedicatedServerModInitializer {
 		LOGGER.info("Initializing Jython Mod Server...");
 		PlatformHooks.set(new FabricPlatformHooks());
 		ModBootstrap.start(LOGGER, "server");
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> Loader.closeAll());
 	}
 }
